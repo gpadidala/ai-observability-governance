@@ -1139,18 +1139,92 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
         <a href="#service-insights" class="module-next">Next: Service Insights →</a>
       </div>
       <div class="reveal">
-        <div class="mockup-dep-graph" role="img" aria-label="RCA dependency graph visualization" style="min-height:320px;margin-bottom:0.75rem">
-          <div class="dep-node dep-node-ok" style="top:10%;left:40%">API<br>Gateway<br>✓</div>
-          <div class="dep-node dep-node-warn" style="top:35%;left:15%">Auth<br>Service<br>⚠</div>
-          <div class="dep-node dep-node-error" style="top:35%;left:62%">Checkout<br>Service<br>✗</div>
-          <div class="dep-node dep-node-ok" style="top:62%;left:5%">Cache<br>Layer<br>✓</div>
-          <div class="dep-node dep-node-error" style="top:62%;left:48%">Payment<br>DB<br>✗</div>
-          <div class="dep-node dep-node-ok" style="top:62%;left:78%">Inventory<br>API<br>✓</div>
-          <div class="dep-edge" style="top:22%;left:47%;width:18%;transform:rotate(28deg)"></div>
-          <div class="dep-edge" style="top:22%;left:44%;width:22%;transform:rotate(-25deg)"></div>
-          <div class="dep-edge dep-edge-error" style="top:50%;left:65%;width:16%;transform:rotate(35deg)"></div>
-          <div class="dep-edge" style="top:50%;left:22%;width:22%;transform:rotate(35deg)"></div>
-          <div class="dep-edge" style="top:50%;left:68%;width:16%;transform:rotate(-22deg)"></div>
+        <div class="mockup-dep-graph" role="img" aria-label="RCA dependency graph visualization" style="padding:1.25rem;margin-bottom:0.75rem">
+          <svg viewBox="0 0 700 318" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+            <defs>
+              <!-- arrowhead for normal edges -->
+              <marker id="arr-gray" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+                <polygon points="0 0,7 2.5,0 5" fill="rgba(255,255,255,0.3)"/>
+              </marker>
+              <!-- arrowhead for error edge -->
+              <marker id="arr-red" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+                <polygon points="0 0,7 2.5,0 5" fill="rgba(224,47,68,0.9)"/>
+              </marker>
+            </defs>
+
+            <!-- ── EDGES (drawn first, behind nodes) ── -->
+
+            <!-- API Gateway → Auth Service -->
+            <line x1="318" y1="62" x2="172" y2="122"
+                  stroke="rgba(255,255,255,0.22)" stroke-width="1.5"
+                  marker-end="url(#arr-gray)"/>
+
+            <!-- API Gateway → Checkout Service -->
+            <line x1="381" y1="62" x2="499" y2="122"
+                  stroke="rgba(255,255,255,0.22)" stroke-width="1.5"
+                  marker-end="url(#arr-gray)"/>
+
+            <!-- Auth Service → Cache Layer -->
+            <line x1="120" y1="185" x2="91" y2="228"
+                  stroke="rgba(255,255,255,0.18)" stroke-width="1.5"
+                  marker-end="url(#arr-gray)"/>
+
+            <!-- Checkout Service → Payment DB  ⚠ ERROR propagation -->
+            <line x1="500" y1="178" x2="400" y2="232"
+                  stroke="rgba(224,47,68,0.75)" stroke-width="2"
+                  stroke-dasharray="6 3"
+                  marker-end="url(#arr-red)">
+              <animate attributeName="stroke-opacity" values="0.75;0.25;0.75" dur="1.8s" repeatCount="indefinite"/>
+            </line>
+
+            <!-- Checkout Service → Inventory API -->
+            <line x1="552" y1="184" x2="588" y2="230"
+                  stroke="rgba(255,255,255,0.18)" stroke-width="1.5"
+                  marker-end="url(#arr-gray)"/>
+
+            <!-- ── NODES ── -->
+
+            <!-- API Gateway — OK (top center) -->
+            <circle cx="350" cy="45" r="36" fill="rgba(82,196,26,0.1)" stroke="rgba(82,196,26,0.75)" stroke-width="1.5"/>
+            <text x="350" y="37" text-anchor="middle" fill="#52c41a" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">API</text>
+            <text x="350" y="48" text-anchor="middle" fill="#52c41a" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Gateway</text>
+            <text x="350" y="61" text-anchor="middle" fill="#52c41a" font-size="13">✓</text>
+
+            <!-- Auth Service — WARN (mid-left) -->
+            <circle cx="140" cy="155" r="36" fill="rgba(250,173,20,0.1)" stroke="rgba(250,173,20,0.75)" stroke-width="1.5"/>
+            <text x="140" y="147" text-anchor="middle" fill="#faad14" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Auth</text>
+            <text x="140" y="158" text-anchor="middle" fill="#faad14" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Service</text>
+            <text x="140" y="171" text-anchor="middle" fill="#faad14" font-size="13">⚠</text>
+
+            <!-- Checkout Service — ERROR (mid-right) -->
+            <circle cx="530" cy="155" r="36" fill="rgba(224,47,68,0.12)" stroke="rgba(224,47,68,0.8)" stroke-width="1.5">
+              <animate attributeName="stroke-opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <text x="530" y="147" text-anchor="middle" fill="#e02f44" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Checkout</text>
+            <text x="530" y="158" text-anchor="middle" fill="#e02f44" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Service</text>
+            <text x="530" y="171" text-anchor="middle" fill="#e02f44" font-size="13">✗</text>
+
+            <!-- Cache Layer — OK (bottom-left) -->
+            <circle cx="70" cy="262" r="36" fill="rgba(82,196,26,0.1)" stroke="rgba(82,196,26,0.75)" stroke-width="1.5"/>
+            <text x="70" y="254" text-anchor="middle" fill="#52c41a" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Cache</text>
+            <text x="70" y="265" text-anchor="middle" fill="#52c41a" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Layer</text>
+            <text x="70" y="278" text-anchor="middle" fill="#52c41a" font-size="13">✓</text>
+
+            <!-- Payment DB — ERROR (bottom-center) -->
+            <circle cx="370" cy="262" r="36" fill="rgba(224,47,68,0.14)" stroke="rgba(224,47,68,0.9)" stroke-width="2">
+              <animate attributeName="r" values="36;38;36" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="stroke-opacity" values="0.9;0.3;0.9" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <text x="370" y="254" text-anchor="middle" fill="#e02f44" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Payment</text>
+            <text x="370" y="265" text-anchor="middle" fill="#e02f44" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">DB</text>
+            <text x="370" y="278" text-anchor="middle" fill="#e02f44" font-size="13">✗</text>
+
+            <!-- Inventory API — OK (bottom-right) -->
+            <circle cx="610" cy="262" r="36" fill="rgba(82,196,26,0.1)" stroke="rgba(82,196,26,0.75)" stroke-width="1.5"/>
+            <text x="610" y="254" text-anchor="middle" fill="#52c41a" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">Inventory</text>
+            <text x="610" y="265" text-anchor="middle" fill="#52c41a" font-size="9.5" font-weight="800" font-family="system-ui,sans-serif">API</text>
+            <text x="610" y="278" text-anchor="middle" fill="#52c41a" font-size="13">✓</text>
+          </svg>
         </div>
         <div style="background:rgba(224,47,68,0.08);border:1px solid rgba(224,47,68,0.3);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.78rem;color:var(--text-secondary)">🎯 <strong style="color:var(--grafana-red)">Root cause:</strong> Payment DB connection pool exhausted — propagating to Checkout Service → API Gateway error rate</div>
       </div>
