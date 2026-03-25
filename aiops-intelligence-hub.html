@@ -1139,7 +1139,7 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
         <a href="#service-insights" class="module-next">Next: Service Insights →</a>
       </div>
       <div class="reveal">
-        <div class="mockup-dep-graph" role="img" aria-label="RCA dependency graph visualization" style="min-height:300px">
+        <div class="mockup-dep-graph" role="img" aria-label="RCA dependency graph visualization" style="min-height:320px;margin-bottom:0.75rem">
           <div class="dep-node dep-node-ok" style="top:10%;left:40%">API<br>Gateway<br>✓</div>
           <div class="dep-node dep-node-warn" style="top:35%;left:15%">Auth<br>Service<br>⚠</div>
           <div class="dep-node dep-node-error" style="top:35%;left:62%">Checkout<br>Service<br>✗</div>
@@ -1151,8 +1151,8 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
           <div class="dep-edge dep-edge-error" style="top:50%;left:65%;width:16%;transform:rotate(35deg)"></div>
           <div class="dep-edge" style="top:50%;left:22%;width:22%;transform:rotate(35deg)"></div>
           <div class="dep-edge" style="top:50%;left:68%;width:16%;transform:rotate(-22deg)"></div>
-          <div style="position:absolute;bottom:1rem;left:1rem;right:1rem;background:rgba(224,47,68,0.08);border:1px solid rgba(224,47,68,0.3);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.78rem;color:var(--text-secondary)">🎯 <strong style="color:var(--grafana-red)">Root cause:</strong> Payment DB connection pool exhausted — propagating to Checkout Service → API Gateway error rate</div>
         </div>
+        <div style="background:rgba(224,47,68,0.08);border:1px solid rgba(224,47,68,0.3);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.78rem;color:var(--text-secondary)">🎯 <strong style="color:var(--grafana-red)">Root cause:</strong> Payment DB connection pool exhausted — propagating to Checkout Service → API Gateway error rate</div>
       </div>
     </div>
   </div>
