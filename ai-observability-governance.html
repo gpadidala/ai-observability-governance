@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Enablement Governance — Observability Platform - LLM & MCP</title>
+  <style>
+    :root {
+      --bg:       #0f1117;
+      --surface:  #181c27;
+      --card:     #1e2336;
+      --border:   #2a3150;
+      --accent:   #f46800;   /* Grafana orange */
+      --blue:     #3d74e8;
+      --purple:   #8b5cf6;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --yellow:   #f59e0b;
+      --teal:     #14b8a6;
+      --text:     #e2e8f0;
+      --muted:    #8892b0;
+      --radius:   10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── TOP HEADER ── */
+    header {
+      background: linear-gradient(135deg, #0d1321 0%, #1a2040 60%, #0f1a35 100%);
+      border-bottom: 2px solid var(--accent);
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .header-left h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: .4px;
+    }
+    .header-left h1 span { color: var(--accent); }
+    .header-left p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .header-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .badge-grafana  { background: rgba(244,104,0,.15); color: var(--accent); border: 1px solid rgba(244,104,0,.4); }
+    .badge-loki     { background: rgba(61,116,232,.15); color: var(--blue);   border: 1px solid rgba(61,116,232,.4); }
+    .badge-mcp      { background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.4); }
+    .badge-enterprise{ background: rgba(34,197,94,.12); color: var(--green);  border: 1px solid rgba(34,197,94,.35); }
+
+    /* ── LAYOUT ── */
+    main { max-width: 1400px; margin: 0 auto; padding: 32px 40px; }
+
+    /* ── COMPLIANCE RIBBON ── */
+    .compliance-ribbon {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .compliance-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .compliance-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .compliance-card.pci::before  { background: var(--yellow); }
+    .compliance-card.phi::before  { background: var(--red); }
+    .compliance-card.pii::before  { background: var(--blue); }
+
+    .compliance-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .pci  .compliance-icon { background: rgba(245,158,11,.15); }
+    .phi  .compliance-icon { background: rgba(239,68,68,.15); }
+    .pii  .compliance-icon { background: rgba(61,116,232,.15); }
+
+    .compliance-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .compliance-card p  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 12px; margin-top: 8px;
+    }
+    .pill-green { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+    .pill-yellow{ background: rgba(245,158,11,.12); color: var(--yellow);border: 1px solid rgba(245,158,11,.3); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin: 32px 0 16px;
+      font-size: 16px; font-weight: 700;
+      color: #fff;
+    }
+    .section-header::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+    .section-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    /* ── 2-COLUMN GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+
+    /* ── GENERIC CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+    .card h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* ── SIGNAL STACK (Logs/Metrics/Traces/Profiles) ── */
+    .signal-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .signal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 14px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .signal-card:hover { border-color: var(--accent); }
+    .signal-card .sig-icon { font-size: 28px; margin-bottom: 8px; }
+    .signal-card h3 { font-size: 14px; font-weight: 700; color: #fff; }
+    .signal-card p  { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+    .signal-tag {
+      display: inline-block; margin-top: 10px;
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 10px; letter-spacing: .5px; text-transform: uppercase;
+    }
+
+    /* ── POLICY TABLE ── */
+    .policy-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .policy-table th {
+      background: var(--bg); color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px; font-size: 11px;
+      padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .policy-table td { padding: 10px 14px; border-bottom: 1px solid rgba(42,49,80,.6); }
+    .policy-table tr:last-child td { border-bottom: none; }
+    .policy-table tr:hover td { background: rgba(255,255,255,.02); }
+
+    /* ── PROMPT SECTION ── */
+    .prompt-block {
+      background: #0a0d1a;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--purple);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .prompt-block .prompt-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--purple); margin-bottom: 10px;
+    }
+    .prompt-block pre {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 12.5px; line-height: 1.7; color: #cdd6f4;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .prompt-block .copy-btn {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(139,92,246,.15); color: var(--purple);
+      border: 1px solid rgba(139,92,246,.3); border-radius: 6px;
+      padding: 4px 12px; font-size: 11px; cursor: pointer;
+      font-weight: 600; transition: background .2s;
+    }
+    .prompt-block .copy-btn:hover { background: rgba(139,92,246,.3); }
+
+    /* ── ARCH DIAGRAM ── */
+    .arch {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      overflow-x: auto;
+    }
+    .arch-flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: nowrap; min-width: 700px;
+    }
+    .arch-node {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+      min-width: 100px;
+    }
+    .arch-node .node-icon { font-size: 20px; }
+    .arch-node .node-label { font-size: 11px; font-weight: 700; margin-top: 4px; color: #fff; }
+    .arch-node .node-sub   { font-size: 10px; color: var(--muted); }
+    .arch-arrow {
+      padding: 0 6px;
+      color: var(--muted); font-size: 18px;
+    }
+    .arch-node.highlighted { border-color: var(--accent); background: rgba(244,104,0,.06); }
+
+    /* ── RISK MATRIX ── */
+    .risk-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(42,49,80,.5);
+    }
+    .risk-item:last-child { border-bottom: none; }
+    .risk-level {
+      width: 60px; text-align: center;
+      padding: 3px 0; border-radius: 6px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; flex-shrink: 0;
+    }
+    .risk-high   { background: rgba(239,68,68,.15); color: var(--red);    border: 1px solid rgba(239,68,68,.3); }
+    .risk-med    { background: rgba(245,158,11,.15); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
+    .risk-low    { background: rgba(34,197,94,.12); color: var(--green);   border: 1px solid rgba(34,197,94,.3); }
+    .risk-text h5 { font-size: 13px; font-weight: 600; color: #fff; }
+    .risk-text p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── TOGGLE TABS ── */
+    .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab {
+      padding: 6px 16px; border-radius: 6px; font-size: 12px;
+      font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); transition: all .2s;
+    }
+    .tab.active, .tab:hover {
+      background: rgba(244,104,0,.12); color: var(--accent);
+      border-color: rgba(244,104,0,.4);
+    }
+
+    /* ── CHECKLIST ── */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 0; font-size: 13px; color: var(--text);
+      border-bottom: 1px dashed rgba(42,49,80,.5);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 48px;
+    }
+
+    /* ── RBAC MATRIX ── */
+    .rbac-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .rbac-table th {
+      background: var(--bg); color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px; font-size: 11px;
+      padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .rbac-table td { padding: 9px 14px; border-bottom: 1px solid rgba(42,49,80,.5); vertical-align: middle; }
+    .rbac-table tr:last-child td { border-bottom: none; }
+    .rbac-table tr:hover td { background: rgba(255,255,255,.02); }
+    .perm-yes  { color: var(--green);  font-size: 15px; }
+    .perm-no   { color: var(--red);    font-size: 15px; }
+    .perm-ro   { color: var(--yellow); font-size: 13px; font-weight:600; }
+    .perm-cond { color: var(--blue);   font-size: 13px; font-weight:600; }
+
+    .role-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 12px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .role-admin    { background:rgba(239,68,68,.12);  color:var(--red);    border:1px solid rgba(239,68,68,.3); }
+    .role-editor   { background:rgba(244,104,0,.12);  color:var(--accent); border:1px solid rgba(244,104,0,.3); }
+    .role-viewer   { background:rgba(34,197,94,.10);  color:var(--green);  border:1px solid rgba(34,197,94,.3); }
+    .role-ai       { background:rgba(139,92,246,.12); color:var(--purple); border:1px solid rgba(139,92,246,.3); }
+    .role-sa       { background:rgba(20,184,166,.12); color:var(--teal);   border:1px solid rgba(20,184,166,.3); }
+    .role-readonly { background:rgba(136,146,176,.12);color:var(--muted);  border:1px solid rgba(136,146,176,.3); }
+
+    /* ── SERVICE ACCOUNT CARDS ── */
+    .sa-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .sa-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+    }
+    .sa-card h5 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px; display:flex;align-items:center;gap:7px; }
+    .sa-card p  { font-size: 12px; color: var(--muted); line-height:1.5; }
+    .sa-card code { font-size: 11px; background: var(--bg); padding:2px 6px; border-radius:4px; color: var(--teal); }
+    .sa-token-scope {
+      margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .scope-pill {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px;
+      background: rgba(42,49,80,.8); color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── BACKEND STACK CARDS ── */
+    .backend-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+    .backend-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+    }
+    .backend-card h5 { font-size: 14px; font-weight:700; color:#fff; margin-bottom:10px; display:flex;align-items:center;gap:8px; }
+    .cfg-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed rgba(42,49,80,.5); font-size:12.5px; }
+    .cfg-row:last-child { border-bottom:none; }
+    .cfg-key   { color:var(--muted); }
+    .cfg-value { color:var(--text); font-weight:600; }
+    .cfg-value.ok   { color:var(--green); }
+    .cfg-value.warn { color:var(--yellow); }
+    .cfg-value.bad  { color:var(--red); }
+
+    /* responsive */
+    @media (max-width: 900px) {
+      .sa-grid, .backend-grid { grid-template-columns: 1fr; }
+    }
+      main { padding: 20px; }
+      .compliance-ribbon, .grid-2, .grid-3, .signal-grid { grid-template-columns: 1fr; }
+      .arch-flow { flex-direction: column; min-width: unset; }
+      .arch-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════ HEADER ════════════════════ -->
+<header>
+  <div class="header-left">
+    <h1>🛡️ AI Enablement <span>Governance</span> — Observability Platform</h1>
+    <p>Enterprise Policy · Compliance Controls · LLM Data Safety · MCP Server Governance</p>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-grafana">Grafana Enterprise</span>
+    <span class="badge badge-loki">Loki Stack</span>
+    <span class="badge badge-mcp">MCP Server</span>
+    <span class="badge badge-enterprise">Enterprise Plugins</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ════════════════════ COMPLIANCE RIBBON ════════════════════ -->
+  <div class="compliance-ribbon">
+
+    <div class="compliance-card pci">
+      <div class="compliance-icon">💳</div>
+      <div>
+        <h3>PCI DSS Compliance</h3>
+        <p>Payment Card Industry data must never be passed to LLM context. Cardholder data, PAN, CVV, and transaction IDs are blocked at the MCP ingestion layer before any AI query is processed.</p>
+        <span class="status-pill pill-green"><span class="dot"></span> Enforced — Redaction Active</span>
+      </div>
+    </div>
+
+    <div class="compliance-card phi">
+      <div class="compliance-icon">🏥</div>
+      <div>
+        <h3>PHI / HIPAA Compliance</h3>
+        <p>Protected Health Information — patient IDs, diagnoses, medication logs — is masked in Loki log pipelines. AI inference is blocked on streams tagged <code>sensitivity=phi</code>.</p>
+        <span class="status-pill pill-green"><span class="dot"></span> Enforced — Stream Tagging On</span>
+      </div>
+    </div>
+
+    <div class="compliance-card pii">
+      <div class="compliance-icon">👤</div>
+      <div>
+        <h3>PII / GDPR Compliance</h3>
+        <p>Personally Identifiable Information — emails, IPs, names, SSNs — is de-identified via the Grafana Transformation pipeline before LLM summarisation or alerting AI workflows.</p>
+        <span class="status-pill pill-yellow"><span class="dot"></span> Partial — Review PII Regex Rules</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════ OBSERVABILITY SIGNAL STACK ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(244,104,0,.12)">📡</div>
+    Observability Signal Stack — AI Governance Coverage
+  </div>
+
+  <div class="signal-grid">
+    <div class="signal-card">
+      <div class="sig-icon">📋</div>
+      <h3>Logs</h3>
+      <p>Loki · LogQL · Pipelines<br>AI-assisted log anomaly detection with PII redaction pre-inference</p>
+      <span class="signal-tag" style="background:rgba(61,116,232,.12);color:#3d74e8;border:1px solid rgba(61,116,232,.3)">Loki</span>
+    </div>
+    <div class="signal-card">
+      <div class="sig-icon">📈</div>
+      <h3>Metrics</h3>
+      <p>Prometheus · Mimir · Cortex<br>LLM cost, token usage, and inference latency metrics surfaced in Grafana</p>
+      <span class="signal-tag" style="background:rgba(244,104,0,.12);color:#f46800;border:1px solid rgba(244,104,0,.3)">Prometheus</span>
+    </div>
+    <div class="signal-card">
+      <div class="sig-icon">🔗</div>
+      <h3>Traces</h3>
+      <p>Tempo · OpenTelemetry<br>Distributed trace context attached to every MCP AI call for full lineage</p>
+      <span class="signal-tag" style="background:rgba(20,184,166,.12);color:#14b8a6;border:1px solid rgba(20,184,166,.3)">Tempo</span>
+    </div>
+    <div class="signal-card">
+      <div class="sig-icon">🔥</div>
+      <h3>Profiles</h3>
+      <p>Pyroscope · Continuous Profiling<br>CPU/memory profiling of AI model inference pods for performance governance</p>
+      <span class="signal-tag" style="background:rgba(139,92,246,.12);color:#8b5cf6;border:1px solid rgba(139,92,246,.3)">Pyroscope</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════ SYSTEM ARCHITECTURE ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(61,116,232,.12)">🏗️</div>
+    AI Observability Architecture
+  </div>
+
+  <div class="arch" style="margin-bottom:32px">
+    <div class="arch-flow">
+      <div class="arch-node">
+        <div class="node-icon">📊</div>
+        <div class="node-label">Data Sources</div>
+        <div class="node-sub">Apps / K8s / Infra</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node highlighted">
+        <div class="node-icon">🔒</div>
+        <div class="node-label">PCI/PHI/PII<br>Redaction Layer</div>
+        <div class="node-sub">Loki Pipeline</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="node-icon">🗄️</div>
+        <div class="node-label">Loki / Tempo<br>Mimir / Pyroscope</div>
+        <div class="node-sub">Signal Storage</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node highlighted">
+        <div class="node-icon">🤖</div>
+        <div class="node-label">MCP Server</div>
+        <div class="node-sub">AI Gateway</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="node-icon">🧠</div>
+        <div class="node-label">LLM / AI</div>
+        <div class="node-sub">Sanitised Context Only</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node highlighted">
+        <div class="node-icon">📡</div>
+        <div class="node-label">Grafana UI</div>
+        <div class="node-sub">Enterprise Plugins</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ GOVERNANCE PROMPT LIBRARY ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(139,92,246,.12)">🧠</div>
+    AI Governance Prompt Library — MCP Server Templates
+  </div>
+
+  <div class="prompt-block">
+    <div class="prompt-label">🔒 System Prompt — Data Safety Guard</div>
+    <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+    <pre>You are an AI assistant integrated into an enterprise observability platform (Grafana + Loki + Tempo + Pyroscope + Mimir).
+
+STRICT COMPLIANCE RULES — follow these without exception:
+
+1. PCI DSS: You MUST NOT process, repeat, store, or reason about any data that appears to be:
+   - Primary Account Numbers (PAN/card numbers) — 13–19 digit sequences
+   - CVV/CVC codes — 3–4 digit codes adjacent to card data
+   - Magnetic stripe or chip data
+   - Bank account or routing numbers
+   → If detected: respond "⛔ PCI data detected — redacted from context."
+
+2. PHI / HIPAA: You MUST NOT process:
+   - Patient names, dates of birth, medical record numbers
+   - Diagnoses, medication names tied to individuals
+   - Health insurance or provider IDs
+   → If detected: respond "⛔ PHI data detected — masked per HIPAA policy."
+
+3. PII / GDPR: You MUST anonymise or decline to reason about:
+   - Full names, email addresses, phone numbers, home addresses
+   - Social security / national ID numbers
+   - IP addresses that identify individual users
+   → Replace with [REDACTED] tokens and proceed with analysis.
+
+4. SCOPE: Your role is strictly limited to observability tasks:
+   - Summarise logs, metrics, traces, and profiles
+   - Identify anomalies, error patterns, and SLO violations
+   - Suggest remediation steps based on sanitised telemetry
+   - Never execute actions — only recommend
+
+5. AUDIT: Every response you generate will be logged to Loki with trace context.
+   Include a confidence level (Low / Medium / High) and signal sources used.</pre>
+  </div>
+
+  <div class="prompt-block">
+    <div class="prompt-label">📋 Log Analysis Prompt — Anomaly Detection</div>
+    <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+    <pre>You are analysing log streams from Loki. The data has been pre-processed by the PCI/PHI/PII redaction pipeline.
+
+Context provided:
+- Log stream: {loki_stream_selector}
+- Time window: {start_time} to {end_time}
+- Environment: {environment} (prod / staging / dev)
+- Service: {service_name}
+
+Tasks:
+1. Identify error patterns, anomalies, and sudden frequency changes
+2. Correlate with any available trace IDs (Tempo) in the log lines
+3. Flag any [REDACTED] tokens that appear in unexpected high-cardinality fields — this may indicate a redaction misconfiguration
+4. Summarise findings in plain English with:
+   - Severity: Critical / High / Medium / Low
+   - Affected components
+   - Recommended next steps
+   - Loki LogQL query to drill further
+
+DO NOT include raw log lines longer than 200 characters in your response.
+DO NOT reveal any data tagged sensitivity=phi or sensitivity=pci.</pre>
+  </div>
+
+  <div class="prompt-block">
+    <div class="prompt-label">📈 Metrics Intelligence Prompt — SLO & Cost Governance</div>
+    <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+    <pre>You are an observability AI assistant analysing Prometheus/Mimir metrics for the platform team.
+
+Metrics context:
+- Datasource: Mimir (Enterprise)
+- Dashboard: {dashboard_uid}
+- Key SLOs: error_rate < 0.1%, p99_latency < 500ms, availability > 99.9%
+
+Additionally, monitor AI/LLM usage metrics:
+- llm_tokens_total{model, environment} — total token consumption
+- llm_request_duration_seconds — inference latency
+- llm_cost_usd_total — estimated spend by model and team
+- mcp_requests_total{status, compliance_check} — MCP server call volume
+- pii_redactions_total — number of PII tokens removed before LLM calls
+- pci_blocks_total — number of requests blocked due to PCI data detection
+
+Tasks:
+1. Identify any SLO breach or burn rate anomaly
+2. Report LLM token consumption trends — flag unusual spikes
+3. Alert if pci_blocks_total or phi_blocks_total are zero (may indicate redaction pipeline failure)
+4. Recommend PromQL recording rules for any high-cardinality queries detected
+5. Suggest cost optimisation opportunities across model tiers</pre>
+  </div>
+
+  <div class="prompt-block">
+    <div class="prompt-label">🔗 Trace & Profile Prompt — Performance Root Cause</div>
+    <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+    <pre>You are performing root cause analysis using distributed traces (Tempo) and continuous profiling (Pyroscope).
+
+Trace context:
+- Trace ID: {trace_id}
+- Service graph: {upstream_services} → {service_name} → {downstream_services}
+- Span count: {span_count} | Duration: {total_duration_ms}ms
+
+Profile context (Pyroscope):
+- Profile type: cpu / memory / goroutine / mutex
+- Time window aligned to trace: {start_time} — {end_time}
+- Pod: {pod_name} in namespace {namespace}
+
+Governance constraints:
+- Do not include user-identifiable span tags in your analysis output
+- Anonymise service account names and API keys found in span attributes
+- Focus on structural performance — do not speculate on business logic
+
+Tasks:
+1. Identify the critical path and bottleneck span
+2. Correlate CPU/memory hotspots from Pyroscope with slow spans in Tempo
+3. Assess if the AI inference call (mcp_server span) is contributing to latency
+4. Provide a prioritised remediation plan with estimated impact</pre>
+  </div>
+
+  <!-- ════════════════════ POLICY TABLE ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(34,197,94,.1)">📋</div>
+    Data Classification &amp; AI Access Policy
+  </div>
+
+  <div class="card" style="margin-bottom:32px; padding: 0; overflow:hidden;">
+    <table class="policy-table">
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Classification</th>
+          <th>Loki Tag</th>
+          <th>LLM Access</th>
+          <th>Redaction Method</th>
+          <th>Audit Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Card Numbers (PAN)</td>
+          <td><span class="risk-level risk-high">PCI</span></td>
+          <td><code>sensitivity=pci</code></td>
+          <td>❌ Blocked</td>
+          <td>Regex mask + stream drop</td>
+          <td>✅ Yes</td>
+        </tr>
+        <tr>
+          <td>Patient Health Records</td>
+          <td><span class="risk-level risk-high">PHI</span></td>
+          <td><code>sensitivity=phi</code></td>
+          <td>❌ Blocked</td>
+          <td>Field encryption + tokenisation</td>
+          <td>✅ Yes</td>
+        </tr>
+        <tr>
+          <td>Email / Phone / IP</td>
+          <td><span class="risk-level risk-med">PII</span></td>
+          <td><code>sensitivity=pii</code></td>
+          <td>⚠️ Redacted</td>
+          <td>[REDACTED] substitution</td>
+          <td>✅ Yes</td>
+        </tr>
+        <tr>
+          <td>Service Error Logs</td>
+          <td><span class="risk-level risk-low">Internal</span></td>
+          <td><code>sensitivity=internal</code></td>
+          <td>✅ Allowed</td>
+          <td>None</td>
+          <td>Optional</td>
+        </tr>
+        <tr>
+          <td>Infrastructure Metrics</td>
+          <td><span class="risk-level risk-low">Public</span></td>
+          <td><code>sensitivity=none</code></td>
+          <td>✅ Allowed</td>
+          <td>None</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td>Trace Span Tags</td>
+          <td><span class="risk-level risk-med">PII</span></td>
+          <td><code>sensitivity=pii</code></td>
+          <td>⚠️ Sanitised</td>
+          <td>Tag allowlist filter</td>
+          <td>✅ Yes</td>
+        </tr>
+        <tr>
+          <td>CPU / Memory Profiles</td>
+          <td><span class="risk-level risk-low">Internal</span></td>
+          <td><code>sensitivity=none</code></td>
+          <td>✅ Allowed</td>
+          <td>None</td>
+          <td>No</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════ RISK MATRIX + CHECKLIST ════════════════════ -->
+  <div class="grid-2">
+
+    <div class="card">
+      <h4>⚠️ Governance Risk Register</h4>
+      <div class="risk-item">
+        <span class="risk-level risk-high">HIGH</span>
+        <div class="risk-text">
+          <h5>PCI data leaking into LLM context</h5>
+          <p>Redaction pipeline failure or bypass. Monitor <code>pci_blocks_total</code> — alert if zero for &gt;5 min.</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level risk-high">HIGH</span>
+        <div class="risk-text">
+          <h5>PHI exposure via Loki log query</h5>
+          <p>Untagged HIPAA streams reaching AI summarisation. Enforce mandatory stream labelling in onboarding.</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level risk-med">MED</span>
+        <div class="risk-text">
+          <h5>Token cost runaway</h5>
+          <p>Unrestricted LLM queries against large log volumes. Implement token budget per team via MCP middleware.</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level risk-med">MED</span>
+        <div class="risk-text">
+          <h5>PII in trace span attributes</h5>
+          <p>User-supplied data in OTel spans. Enforce span attribute allowlist in the collector config.</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level risk-low">LOW</span>
+        <div class="risk-text">
+          <h5>Model hallucination in runbooks</h5>
+          <p>AI recommending incorrect remediation. Always require human approval for production changes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>✅ Governance Enablement Checklist</h4>
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span> Loki pipeline stages configured with PCI/PHI/PII regex redaction rules</li>
+        <li><span class="check-icon">✅</span> Grafana RBAC — AI features restricted to approved roles only</li>
+        <li><span class="check-icon">✅</span> MCP Server system prompt loaded with compliance guardrails</li>
+        <li><span class="check-icon">✅</span> All LLM requests traced via OpenTelemetry with <code>mcp_server</code> span tags</li>
+        <li><span class="check-icon">✅</span> Token usage and cost metrics published to Mimir</li>
+        <li><span class="check-icon">⬜</span> PII regex rules reviewed by legal team (Q2 2026)</li>
+        <li><span class="check-icon">⬜</span> Automated compliance test suite for redaction pipeline</li>
+        <li><span class="check-icon">⬜</span> Data residency policy applied to LLM API endpoints</li>
+        <li><span class="check-icon">✅</span> Grafana audit logs enabled for all AI-assisted queries</li>
+        <li><span class="check-icon">✅</span> Enterprise plugin licence inventory documented</li>
+        <li><span class="check-icon">⬜</span> Quarterly AI governance review process established</li>
+        <li><span class="check-icon">✅</span> Pyroscope profiles excluded from AI context by default</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════ GRAFANA SERVICE ACCOUNTS ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(20,184,166,.12)">🔑</div>
+    Grafana Service Accounts — AI &amp; Automation Identity Governance
+  </div>
+
+  <div class="sa-grid" style="margin-bottom:32px">
+
+    <div class="sa-card" style="border-top:3px solid var(--teal)">
+      <h5>🤖 MCP Server SA</h5>
+      <p>Dedicated service account for the MCP AI gateway. Read-only access to Loki, Tempo, Mimir, and Pyroscope datasources. Cannot create dashboards, alerts, or modify any configuration.</p>
+      <code>sa-mcp-observability-readonly</code>
+      <div class="sa-token-scope">
+        <span class="scope-pill">datasources:read</span>
+        <span class="scope-pill">datasources:query</span>
+        <span class="scope-pill">dashboards:read</span>
+        <span class="scope-pill">❌ dashboards:write</span>
+        <span class="scope-pill">❌ admin:*</span>
+      </div>
+    </div>
+
+    <div class="sa-card" style="border-top:3px solid var(--purple)">
+      <h5>🔔 Alerting Automation SA</h5>
+      <p>Used by AI-driven alerting workflows to read alert rules and create annotations only. Cannot modify alert rules, silences, or notification policies.</p>
+      <code>sa-ai-alerting-automation</code>
+      <div class="sa-token-scope">
+        <span class="scope-pill">alert.rules:read</span>
+        <span class="scope-pill">annotations:write</span>
+        <span class="scope-pill">❌ alert.rules:write</span>
+        <span class="scope-pill">❌ notifications:write</span>
+      </div>
+    </div>
+
+    <div class="sa-card" style="border-top:3px solid var(--accent)">
+      <h5>📊 Dashboard Provisioning SA</h5>
+      <p>CI/CD pipeline identity for provisioning Grafana dashboards as code. Scoped to a single folder. Token rotation enforced every 90 days.</p>
+      <code>sa-provisioner-dashboards</code>
+      <div class="sa-token-scope">
+        <span class="scope-pill">dashboards:read</span>
+        <span class="scope-pill">dashboards:write</span>
+        <span class="scope-pill">folders:read</span>
+        <span class="scope-pill">❌ datasources:write</span>
+        <span class="scope-pill">❌ org:write</span>
+      </div>
+    </div>
+
+    <div class="sa-card" style="border-top:3px solid var(--blue)">
+      <h5>📡 Synthetic Monitoring SA</h5>
+      <p>Grafana Cloud synthetic monitoring probes. Read-only metrics access for uptime and SLO dashboards. Isolated to the <code>monitoring</code> org.</p>
+      <code>sa-synthetic-monitoring</code>
+      <div class="sa-token-scope">
+        <span class="scope-pill">datasources:read</span>
+        <span class="scope-pill">dashboards:read</span>
+        <span class="scope-pill">❌ users:read</span>
+        <span class="scope-pill">❌ teams:read</span>
+      </div>
+    </div>
+
+    <div class="sa-card" style="border-top:3px solid var(--yellow)">
+      <h5>📤 Reporting SA</h5>
+      <p>Enterprise reporting plugin service account. Generates scheduled PDF/CSV exports of dashboards. Cannot access raw datasources directly — only rendered panels.</p>
+      <code>sa-enterprise-reporting</code>
+      <div class="sa-token-scope">
+        <span class="scope-pill">dashboards:read</span>
+        <span class="scope-pill">reports:write</span>
+        <span class="scope-pill">❌ datasources:query</span>
+        <span class="scope-pill">❌ admin:*</span>
+      </div>
+    </div>
+
+    <div class="sa-card" style="border-top:3px solid var(--red)">
+      <h5>⚙️ Oncall Integration SA</h5>
+      <p>Grafana OnCall integration account. Writes incident annotations and reads alert state only. All PCI/PHI/PII-tagged alert payloads are stripped before being forwarded.</p>
+      <code>sa-oncall-integration</code>
+      <div class="sa-token-scope">
+        <span class="scope-pill">alert.rules:read</span>
+        <span class="scope-pill">annotations:write</span>
+        <span class="scope-pill">❌ datasources:*</span>
+        <span class="scope-pill">❌ dashboards:write</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════ RBAC ROLES MATRIX ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(244,104,0,.12)">🛡️</div>
+    Grafana RBAC — Roles &amp; Permission Matrix
+  </div>
+
+  <div class="card" style="margin-bottom:24px; padding:0; overflow:hidden;">
+    <table class="rbac-table">
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th><span class="role-badge role-admin">Org Admin</span></th>
+          <th><span class="role-badge role-editor">Editor</span></th>
+          <th><span class="role-badge role-viewer">Viewer</span></th>
+          <th><span class="role-badge role-ai">AI Analyst</span> ★</th>
+          <th><span class="role-badge role-sa">Service Acct</span></th>
+          <th><span class="role-badge role-readonly">Read-Only</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Query Datasources</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-ro">Read</td>
+          <td class="perm-ro">Read</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Invoke MCP / AI Features</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-cond">Approved</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-cond">SA Only</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>View PCI-tagged Streams</strong></td>
+          <td class="perm-cond">Masked</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>View PHI-tagged Streams</strong></td>
+          <td class="perm-cond">Masked</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>View PII-tagged Streams</strong></td>
+          <td class="perm-cond">Redacted</td>
+          <td class="perm-cond">Redacted</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-cond">Redacted</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Create / Edit Dashboards</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-ro">Read</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-ro">Read</td>
+        </tr>
+        <tr>
+          <td><strong>Manage Alert Rules</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-ro">Read</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Manage Datasources</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Manage Service Accounts</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Access Enterprise Plugins</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-cond">Limited</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Export Reports (PDF/CSV)</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-cond">SA Only</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Manage Users &amp; Teams</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+        <tr>
+          <td><strong>Org-level Settings</strong></td>
+          <td class="perm-yes">✔</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+          <td class="perm-no">✘</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:10px 16px; font-size:11px; color:var(--muted); border-top:1px solid var(--border);">
+      ★ <strong>AI Analyst</strong> is a custom Grafana RBAC role — must be created and assigned explicitly. It grants LLM feature access with read-only datasource scope and mandatory redaction enforcement.
+      &nbsp;|&nbsp; ✔ Full &nbsp;|&nbsp; Read = Query only &nbsp;|&nbsp; Approved = Requires team lead approval &nbsp;|&nbsp; Masked/Redacted = Data sanitised before display
+    </div>
+  </div>
+
+  <!-- ════════════════════ CUSTOM RBAC ROLE DEFINITIONS ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(61,116,232,.12)">📐</div>
+    Custom RBAC Role Definitions — AI Governance Roles
+  </div>
+
+  <div class="prompt-block" style="border-left-color:var(--blue); margin-bottom:16px;">
+    <div class="prompt-label" style="color:var(--blue)">📐 Custom Role — AI Analyst (Grafana Enterprise RBAC)</div>
+    <button class="copy-btn" onclick="copyPrompt(this)" style="color:var(--blue);border-color:rgba(61,116,232,.3);background:rgba(61,116,232,.1)">Copy</button>
+    <pre>POST /api/access-control/roles
+{
+  "version": 1,
+  "uid": "ai_analyst_role",
+  "name": "AI Analyst",
+  "description": "Custom role for AI/LLM observability workflows. Read-only datasource access with PCI/PHI/PII enforcement.",
+  "global": false,
+  "permissions": [
+    { "action": "datasources:read",         "scope": "datasources:*" },
+    { "action": "datasources:query",        "scope": "datasources:*" },
+    { "action": "dashboards:read",          "scope": "dashboards:*" },
+    { "action": "folders:read",             "scope": "folders:*" },
+    { "action": "alert.rules:read",         "scope": "folders:*" },
+    { "action": "annotations:read",         "scope": "dashboards:*" },
+    { "action": "annotations:write",        "scope": "dashboards:*" },
+    { "action": "reports:read",             "scope": "reports:*" },
+    { "action": "reports:create",           "scope": "reports:*" }
+  ]
+}
+
+# Bind to team:
+POST /api/access-control/teams/:teamId/roles
+{ "roleUid": "ai_analyst_role" }
+
+# Bind to service account:
+POST /api/access-control/users/:saId/roles
+{ "roleUid": "ai_analyst_role", "global": false }</pre>
+  </div>
+
+  <div class="prompt-block" style="border-left-color:var(--green); margin-bottom:32px;">
+    <div class="prompt-label" style="color:var(--green)">🔐 Custom Role — MCP Read-Only SA (Minimal Privilege)</div>
+    <button class="copy-btn" onclick="copyPrompt(this)" style="color:var(--green);border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.08)">Copy</button>
+    <pre>POST /api/access-control/roles
+{
+  "version": 1,
+  "uid": "mcp_sa_readonly_role",
+  "name": "MCP Service Account — Read Only",
+  "description": "Minimal privilege role for MCP Server service account. Query only. No write, no admin.",
+  "global": false,
+  "permissions": [
+    { "action": "datasources:read",  "scope": "datasources:uid:loki-prod" },
+    { "action": "datasources:query", "scope": "datasources:uid:loki-prod" },
+    { "action": "datasources:read",  "scope": "datasources:uid:tempo-prod" },
+    { "action": "datasources:query", "scope": "datasources:uid:tempo-prod" },
+    { "action": "datasources:read",  "scope": "datasources:uid:mimir-prod" },
+    { "action": "datasources:query", "scope": "datasources:uid:mimir-prod" },
+    { "action": "dashboards:read",   "scope": "dashboards:*" }
+  ]
+}
+# Note: Pyroscope datasource intentionally excluded — profiles not in AI scope
+# Token expiry: 90 days, rotation enforced via CI/CD pipeline
+# Audit: All queries logged to Loki stream {app="grafana-audit"}</pre>
+  </div>
+
+  <!-- ════════════════════ BACKEND GRAFANA STACK GOVERNANCE ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(244,104,0,.12)">🏗️</div>
+    Backend Grafana Stack — Security &amp; Access Governance
+  </div>
+
+  <div class="backend-grid" style="margin-bottom:32px;">
+
+    <div class="backend-card">
+      <h5>📋 Loki — Log Backend</h5>
+      <div class="cfg-row"><span class="cfg-key">Auth Mode</span><span class="cfg-value ok">Multi-tenancy ON</span></div>
+      <div class="cfg-row"><span class="cfg-key">Tenant Isolation</span><span class="cfg-value ok">X-Scope-OrgID enforced</span></div>
+      <div class="cfg-row"><span class="cfg-key">AI Query Access</span><span class="cfg-value warn">Read-only SA token</span></div>
+      <div class="cfg-row"><span class="cfg-key">PCI Stream Access</span><span class="cfg-value ok">Blocked (label filter)</span></div>
+      <div class="cfg-row"><span class="cfg-key">PHI Stream Access</span><span class="cfg-value ok">Blocked (label filter)</span></div>
+      <div class="cfg-row"><span class="cfg-key">Retention Policy</span><span class="cfg-value">30d standard · 365d compliance</span></div>
+      <div class="cfg-row"><span class="cfg-key">Encryption at Rest</span><span class="cfg-value ok">AES-256 (S3 SSE)</span></div>
+      <div class="cfg-row"><span class="cfg-key">TLS in Transit</span><span class="cfg-value ok">TLS 1.3</span></div>
+      <div class="cfg-row"><span class="cfg-key">Ingestion Auth</span><span class="cfg-value ok">Bearer token per agent</span></div>
+    </div>
+
+    <div class="backend-card">
+      <h5>📈 Mimir — Metrics Backend</h5>
+      <div class="cfg-row"><span class="cfg-key">Auth Mode</span><span class="cfg-value ok">Multi-tenant (org-per-team)</span></div>
+      <div class="cfg-row"><span class="cfg-key">AI Query Access</span><span class="cfg-value warn">Read-only SA token</span></div>
+      <div class="cfg-row"><span class="cfg-key">Remote Write Auth</span><span class="cfg-value ok">mTLS per Prometheus agent</span></div>
+      <div class="cfg-row"><span class="cfg-key">Query Sharding</span><span class="cfg-value ok">Enabled (parallelism=8)</span></div>
+      <div class="cfg-row"><span class="cfg-key">Ruler API</span><span class="cfg-value warn">Admin SA only</span></div>
+      <div class="cfg-row"><span class="cfg-key">Compactor Access</span><span class="cfg-value ok">Internal only (no external)</span></div>
+      <div class="cfg-row"><span class="cfg-key">Encryption at Rest</span><span class="cfg-value ok">AES-256 (object store)</span></div>
+      <div class="cfg-row"><span class="cfg-key">TLS in Transit</span><span class="cfg-value ok">TLS 1.3</span></div>
+    </div>
+
+    <div class="backend-card">
+      <h5>🔗 Tempo — Trace Backend</h5>
+      <div class="cfg-row"><span class="cfg-key">Auth Mode</span><span class="cfg-value ok">Multi-tenant</span></div>
+      <div class="cfg-row"><span class="cfg-key">AI Trace Access</span><span class="cfg-value warn">Read-only SA token</span></div>
+      <div class="cfg-row"><span class="cfg-key">Span Attribute Allowlist</span><span class="cfg-value warn">⚠️ Needs review — PII risk</span></div>
+      <div class="cfg-row"><span class="cfg-key">Ingestion Protocol</span><span class="cfg-value">OTLP gRPC (mTLS)</span></div>
+      <div class="cfg-row"><span class="cfg-key">Search API</span><span class="cfg-value ok">Read SA only</span></div>
+      <div class="cfg-row"><span class="cfg-key">Tag Filtering</span><span class="cfg-value warn">Allowlist partial</span></div>
+      <div class="cfg-row"><span class="cfg-key">Retention</span><span class="cfg-value">14 days (prod)</span></div>
+      <div class="cfg-row"><span class="cfg-key">Encryption at Rest</span><span class="cfg-value ok">AES-256</span></div>
+    </div>
+
+    <div class="backend-card">
+      <h5>🔥 Pyroscope — Profiling Backend</h5>
+      <div class="cfg-row"><span class="cfg-key">Auth Mode</span><span class="cfg-value ok">Token-based auth</span></div>
+      <div class="cfg-row"><span class="cfg-key">AI Profile Access</span><span class="cfg-value ok">Disabled — excluded from LLM</span></div>
+      <div class="cfg-row"><span class="cfg-key">Ingestion Auth</span><span class="cfg-value ok">Bearer token per pod</span></div>
+      <div class="cfg-row"><span class="cfg-key">Profile Types</span><span class="cfg-value">CPU · Memory · Goroutine</span></div>
+      <div class="cfg-row"><span class="cfg-key">Namespace Isolation</span><span class="cfg-value ok">Label selector enforced</span></div>
+      <div class="cfg-row"><span class="cfg-key">Retention</span><span class="cfg-value">7 days (rolling)</span></div>
+      <div class="cfg-row"><span class="cfg-key">TLS in Transit</span><span class="cfg-value ok">TLS 1.3</span></div>
+      <div class="cfg-row"><span class="cfg-key">Grafana Access</span><span class="cfg-value warn">Viewer+ roles</span></div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════ DATASOURCE ACCESS CONTROL ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(139,92,246,.12)">🗄️</div>
+    Datasource Access Control — Enterprise Plugin Governance
+  </div>
+
+  <div class="card" style="margin-bottom:32px; padding:0; overflow:hidden;">
+    <table class="rbac-table">
+      <thead>
+        <tr>
+          <th>Datasource</th>
+          <th>Type</th>
+          <th>AI / MCP Access</th>
+          <th>PCI Guard</th>
+          <th>PHI Guard</th>
+          <th>PII Guard</th>
+          <th>Min Role Required</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Loki (Prod)</strong></td>
+          <td>Logs</td>
+          <td class="perm-ro">Read SA</td>
+          <td class="perm-yes">✔ Block</td>
+          <td class="perm-yes">✔ Block</td>
+          <td class="perm-yes">✔ Redact</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>Multi-tenant, label-filtered</td>
+        </tr>
+        <tr>
+          <td><strong>Loki (Dev/Staging)</strong></td>
+          <td>Logs</td>
+          <td class="perm-ro">Read SA</td>
+          <td class="perm-yes">✔ Warn</td>
+          <td class="perm-yes">✔ Warn</td>
+          <td class="perm-cond">Partial</td>
+          <td><span class="role-badge role-viewer">Viewer</span></td>
+          <td>Less strict — dev only</td>
+        </tr>
+        <tr>
+          <td><strong>Mimir (Prod)</strong></td>
+          <td>Metrics</td>
+          <td class="perm-ro">Read SA</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td class="perm-yes">✔ Label drop</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>No PII in metrics by design</td>
+        </tr>
+        <tr>
+          <td><strong>Tempo (Prod)</strong></td>
+          <td>Traces</td>
+          <td class="perm-ro">Read SA</td>
+          <td class="perm-yes">✔ Attr filter</td>
+          <td class="perm-yes">✔ Attr filter</td>
+          <td class="perm-cond">⚠️ Review</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>Span attribute allowlist needed</td>
+        </tr>
+        <tr>
+          <td><strong>Pyroscope (Prod)</strong></td>
+          <td>Profiles</td>
+          <td class="perm-no">✘ Blocked</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>Profiles excluded from AI scope</td>
+        </tr>
+        <tr>
+          <td><strong>Alertmanager</strong></td>
+          <td>Alerting</td>
+          <td class="perm-cond">Annot. only</td>
+          <td class="perm-yes">✔ Strip PCI</td>
+          <td class="perm-yes">✔ Strip PHI</td>
+          <td class="perm-yes">✔ Redact</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>Alert payloads sanitised</td>
+        </tr>
+        <tr>
+          <td><strong>PostgreSQL / MySQL</strong></td>
+          <td>SQL DB</td>
+          <td class="perm-no">✘ Blocked</td>
+          <td class="perm-yes">✔ Block</td>
+          <td class="perm-yes">✔ Block</td>
+          <td class="perm-yes">✔ Block</td>
+          <td><span class="role-badge role-admin">Admin</span></td>
+          <td>No direct DB access for AI</td>
+        </tr>
+        <tr>
+          <td><strong>Elasticsearch / OpenSearch</strong></td>
+          <td>Search / Logs</td>
+          <td class="perm-cond">⚠️ Review</td>
+          <td class="perm-cond">⚠️ Partial</td>
+          <td class="perm-cond">⚠️ Partial</td>
+          <td class="perm-cond">⚠️ Partial</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>Redaction pipeline needed</td>
+        </tr>
+        <tr>
+          <td><strong>CloudWatch / Azure Monitor</strong></td>
+          <td>Cloud Metrics</td>
+          <td class="perm-ro">Read SA</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td class="perm-yes">✔ Tag filter</td>
+          <td><span class="role-badge role-editor">Editor</span></td>
+          <td>IAM role-assumed credentials</td>
+        </tr>
+        <tr>
+          <td><strong>Infinity Plugin (HTTP)</strong></td>
+          <td>Generic API</td>
+          <td class="perm-no">✘ Blocked</td>
+          <td class="perm-yes">✔ Block</td>
+          <td class="perm-yes">✔ Block</td>
+          <td class="perm-yes">✔ Block</td>
+          <td><span class="role-badge role-admin">Admin</span></td>
+          <td>Arbitrary HTTP — high risk, no AI</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════ ACCESS CONTROL POLICIES ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(34,197,94,.1)">🔐</div>
+    Access Control Policies — Grafana.ini &amp; Backend Hardening
+  </div>
+
+  <div class="grid-2" style="margin-bottom:32px;">
+    <div class="prompt-block" style="border-left-color:var(--accent); margin:0;">
+      <div class="prompt-label" style="color:var(--accent)">⚙️ grafana.ini — Auth &amp; Security Hardening</div>
+      <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+      <pre>[auth]
+disable_login_form = false
+oauth_auto_login = true
+login_maximum_inactive_lifetime_days = 1
+login_maximum_lifetime_days = 7
+
+[auth.generic_oauth]
+enabled = true
+name = "Enterprise SSO"
+client_id = ${OAUTH_CLIENT_ID}
+client_secret = ${OAUTH_CLIENT_SECRET}
+scopes = openid email profile groups
+role_attribute_path = contains(groups[*], 'grafana-admins') && 'Admin' || contains(groups[*], 'grafana-ai-team') && 'Editor' || 'Viewer'
+
+[security]
+admin_password = ${GRAFANA_ADMIN_PASSWORD}
+secret_key = ${GRAFANA_SECRET_KEY}
+disable_gravatar = true
+cookie_secure = true
+cookie_samesite = strict
+content_security_policy = true
+x_content_type_options = true
+x_xss_protection = true
+strict_transport_security = true
+
+[access_control]
+enabled = true
+# Enable fine-grained RBAC (Enterprise)
+
+[users]
+allow_sign_up = false
+allow_org_create = false
+auto_assign_org = true
+auto_assign_org_role = Viewer   # most restrictive default
+
+[service_accounts]
+# Rotate all SA tokens every 90 days
+# Enforce via CI/CD pipeline hook</pre>
+    </div>
+
+    <div class="prompt-block" style="border-left-color:var(--teal); margin:0;">
+      <div class="prompt-label" style="color:var(--teal)">🔒 Network &amp; Datasource Access Policy</div>
+      <button class="copy-btn" onclick="copyPrompt(this)" style="color:var(--teal);border-color:rgba(20,184,166,.3);background:rgba(20,184,166,.1)">Copy</button>
+      <pre># Grafana datasource proxy — network policy (Kubernetes)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana-datasource-access
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: loki
+      ports: [{ protocol: TCP, port: 3100 }]
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mimir
+      ports: [{ protocol: TCP, port: 9009 }]
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tempo
+      ports: [{ protocol: TCP, port: 3200 }]
+    - to:
+        - podSelector:
+            matchLabels:
+              app: pyroscope
+      ports: [{ protocol: TCP, port: 4040 }]
+    # Block all other egress by default
+    # → Prevents Infinity/HTTP plugin reaching external APIs
+    # → Prevents SQL datasources reaching non-approved DBs</pre>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MCP SERVER CONFIG ════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(139,92,246,.12)">⚙️</div>
+    MCP Server — Governance Configuration Reference
+  </div>
+
+  <div class="prompt-block" style="border-left-color: var(--teal);">
+    <div class="prompt-label" style="color:var(--teal)">⚙️ MCP Server Config (YAML Reference)</div>
+    <button class="copy-btn" onclick="copyPrompt(this)" style="color:var(--teal); border-color:rgba(20,184,166,.3); background:rgba(20,184,166,.1)">Copy</button>
+    <pre>mcp_server:
+  governance:
+    compliance_checks_enabled: true
+    pci_detection:
+      enabled: true
+      action: block          # block | redact | warn
+      patterns:
+        - '\b(?:\d[ -]?){13,19}\b'   # PAN / card numbers
+        - '\b\d{3,4}\b(?=.*cvv)'     # CVV heuristic
+    phi_detection:
+      enabled: true
+      action: block
+      stream_label_filter: "sensitivity=phi"
+    pii_detection:
+      enabled: true
+      action: redact
+      replacement: "[REDACTED]"
+      patterns:
+        - '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'  # email
+        - '\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'           # IPv4
+        - '\b\d{3}-\d{2}-\d{4}\b'                              # SSN
+
+  token_governance:
+    max_tokens_per_request: 8000
+    max_tokens_per_team_daily: 500000
+    cost_alert_threshold_usd: 50
+
+  telemetry:
+    trace_all_requests: true
+    otel_endpoint: "http://tempo.monitoring:4317"
+    loki_audit_stream: '{app="mcp-server", env="prod"}'
+    metrics_prefix: "mcp_"
+
+  datasource_access:
+    loki:   read_only: true
+    mimir:  read_only: true
+    tempo:  read_only: true
+    pyroscope: enabled: false   # profiles excluded from AI context
+</pre>
+  </div>
+
+</main>
+
+<footer>
+  AI Enablement Governance · Observability Platform · Enterprise Edition &nbsp;|&nbsp;
+  Grafana · Loki · Tempo · Mimir · Pyroscope · MCP Server &nbsp;|&nbsp;
+  PCI DSS · HIPAA / PHI · GDPR / PII Compliant Architecture &nbsp;|&nbsp;
+  Last reviewed: March 2026
+</footer>
+
+<script>
+  function copyPrompt(btn) {
+    const pre = btn.parentElement.querySelector('pre');
+    navigator.clipboard.writeText(pre.textContent).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
