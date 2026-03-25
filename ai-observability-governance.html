@@ -5,351 +5,462 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Enablement Governance — Observability Platform - LLM & MCP</title>
   <style>
+    /* ═══════════════════════════════════════════════
+       DESIGN TOKENS — NEXT LEVEL
+    ═══════════════════════════════════════════════ */
     :root {
-      --bg:       #0f1117;
-      --surface:  #181c27;
-      --card:     #1e2336;
-      --border:   #2a3150;
-      --accent:   #f46800;   /* Grafana orange */
-      --blue:     #3d74e8;
-      --purple:   #8b5cf6;
-      --green:    #22c55e;
-      --red:      #ef4444;
-      --yellow:   #f59e0b;
-      --teal:     #14b8a6;
-      --text:     #e2e8f0;
-      --muted:    #8892b0;
-      --radius:   10px;
+      --bg:        #07080f;
+      --surface:   #0c0e18;
+      --card:      #0f1120;
+      --card-2:    #121526;
+      --border:    rgba(255,255,255,0.07);
+      --border-hover: rgba(255,107,53,0.45);
+      /* Accent palette */
+      --accent:    #FF6B35;
+      --accent-dk: #e0521a;
+      --cyan:      #00D4FF;
+      --purple:    #8B5CF6;
+      --green:     #00FF88;
+      --red:       #FF2D55;
+      --yellow:    #FFD60A;
+      --teal:      #2DD4BF;
+      --blue:      #3D8EF0;
+      --pink:      #F472B6;
+      /* Text */
+      --text:      #E8EAF6;
+      --muted:     #6B7594;
+      --muted2:    #4A5270;
+      /* Glows */
+      --glow-orange: 0 0 24px rgba(255,107,53,0.35);
+      --glow-cyan:   0 0 20px rgba(0,212,255,0.25);
+      --glow-green:  0 0 16px rgba(0,255,136,0.3);
+      --glow-red:    0 0 16px rgba(255,45,85,0.3);
+      /* Radii */
+      --radius:    12px;
+      --radius-sm: 7px;
+      --radius-lg: 16px;
+      /* Transitions */
+      --t:         0.2s cubic-bezier(0.4,0,0.2,1);
+      --t-spring:  0.4s cubic-bezier(0.34,1.56,0.64,1);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ═══════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.65;
       min-height: 100vh;
+      cursor: none;
+    }
+    /* subtle dot grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    /* ── TOP HEADER ── */
+    /* ── CURSOR ── */
+    #cur-dot  { position:fixed;width:7px;height:7px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--accent),0 0 20px rgba(255,107,53,.4); }
+    #cur-ring { position:fixed;width:32px;height:32px;border:1.5px solid rgba(255,107,53,.45);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s; }
+    @media(hover:none){#cur-dot,#cur-ring{display:none}body{cursor:auto}}
+
+    /* ═══════════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════════ */
     header {
-      background: linear-gradient(135deg, #0d1321 0%, #1a2040 60%, #0f1a35 100%);
-      border-bottom: 2px solid var(--accent);
-      padding: 24px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+      position: relative;
+      background: linear-gradient(135deg, #080c1a 0%, #0f1530 50%, #080c1a 100%);
+      border-bottom: 1px solid rgba(255,107,53,0.2);
+      padding: 28px 44px 0;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,53,0.08), transparent 70%);
+      pointer-events: none;
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; position: relative; z-index: 1;
+      padding-bottom: 20px;
+    }
+    .header-logo { display: flex; align-items: center; gap: 12px; }
+    .header-logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dk));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: var(--glow-orange);
+      flex-shrink: 0;
     }
     .header-left h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: .4px;
+      font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.3px; line-height: 1.2;
     }
     .header-left h1 span { color: var(--accent); }
-    .header-left p { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .header-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .header-left p { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+    .header-badges { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
     .badge {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .5px;
-      text-transform: uppercase;
+      padding: 4px 11px; border-radius: 20px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      transition: all var(--t);
     }
-    .badge-grafana  { background: rgba(244,104,0,.15); color: var(--accent); border: 1px solid rgba(244,104,0,.4); }
-    .badge-loki     { background: rgba(61,116,232,.15); color: var(--blue);   border: 1px solid rgba(61,116,232,.4); }
-    .badge-mcp      { background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.4); }
-    .badge-enterprise{ background: rgba(34,197,94,.12); color: var(--green);  border: 1px solid rgba(34,197,94,.35); }
+    .badge:hover { transform: translateY(-1px); filter: brightness(1.15); }
+    .badge-grafana   { background: rgba(255,107,53,.1);  color: var(--accent); border: 1px solid rgba(255,107,53,.3); }
+    .badge-loki      { background: rgba(61,142,240,.1);  color: var(--blue);   border: 1px solid rgba(61,142,240,.3); }
+    .badge-mcp       { background: rgba(139,92,246,.1);  color: var(--purple); border: 1px solid rgba(139,92,246,.3); }
+    .badge-enterprise{ background: rgba(0,255,136,.08);  color: var(--green);  border: 1px solid rgba(0,255,136,.25); }
+    .badge-tempo     { background: rgba(0,212,255,.1);   color: var(--cyan);   border: 1px solid rgba(0,212,255,.3);  }
+    .badge-pyroscope { background: rgba(244,114,182,.1); color: var(--pink);   border: 1px solid rgba(244,114,182,.3);}
+    .badge-faro      { background: rgba(45,212,191,.1);  color: var(--teal);   border: 1px solid rgba(45,212,191,.3); }
 
-    /* ── LAYOUT ── */
-    main { max-width: 1400px; margin: 0 auto; padding: 32px 40px; }
-
-    /* ── COMPLIANCE RIBBON ── */
-    .compliance-ribbon {
+    /* ── GOVERNANCE METRICS BAR (live header strip) ── */
+    .gov-metrics-bar {
+      position: relative; z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.05);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 32px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+    }
+    .gov-metric {
+      padding: 12px 16px;
+      border-right: 1px solid rgba(255,255,255,0.04);
+      display: flex; align-items: center; gap: 10px;
+      transition: background var(--t);
+    }
+    .gov-metric:last-child { border-right: none; }
+    .gov-metric:hover { background: rgba(255,255,255,0.03); }
+    .gov-metric-icon {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .gov-metric-val  { font-size: 17px; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
+    .gov-metric-lbl  { font-size: 10px; color: var(--muted); letter-spacing: .04em; margin-top: 2px; }
+    .gm-green  .gov-metric-icon { background: rgba(0,255,136,.1); }
+    .gm-green  .gov-metric-val  { color: var(--green); text-shadow: var(--glow-green); }
+    .gm-orange .gov-metric-icon { background: rgba(255,107,53,.1); }
+    .gm-orange .gov-metric-val  { color: var(--accent); }
+    .gm-red    .gov-metric-icon { background: rgba(255,45,85,.1); }
+    .gm-red    .gov-metric-val  { color: var(--red); text-shadow: var(--glow-red); }
+    .gm-cyan   .gov-metric-icon { background: rgba(0,212,255,.1); }
+    .gm-cyan   .gov-metric-val  { color: var(--cyan); text-shadow: var(--glow-cyan); }
+    .gm-purple .gov-metric-icon { background: rgba(139,92,246,.1); }
+    .gm-purple .gov-metric-val  { color: var(--purple); }
+    .gm-yellow .gov-metric-icon { background: rgba(255,208,10,.1); }
+    .gm-yellow .gov-metric-val  { color: var(--yellow); }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: var(--glow-green);
+      animation: pulse-dot 2.5s ease infinite; flex-shrink: 0;
+    }
+    @keyframes pulse-dot {
+      0%,100%{transform:scale(1);opacity:1}
+      50%{transform:scale(1.5);opacity:.6}
+    }
+
+    /* ═══════════════════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════════════════ */
+    main { max-width: 1440px; margin: 0 auto; padding: 32px 44px; position: relative; z-index: 1; }
+
+    /* ═══════════════════════════════════════════════
+       COMPLIANCE RIBBON
+    ═══════════════════════════════════════════════ */
+    .compliance-ribbon {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; margin-bottom: 32px;
     }
     .compliance-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 24px;
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      position: relative;
-      overflow: hidden;
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      display: flex; align-items: flex-start; gap: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color var(--t), box-shadow var(--t), transform var(--t);
     }
+    .compliance-card:hover { transform: translateY(-3px); }
     .compliance-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
     }
-    .compliance-card.pci::before  { background: var(--yellow); }
-    .compliance-card.phi::before  { background: var(--red); }
-    .compliance-card.pii::before  { background: var(--blue); }
-
+    .compliance-card::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.025), transparent);
+      pointer-events: none;
+    }
+    .compliance-card.pci { border-color: rgba(255,208,10,.15); }
+    .compliance-card.pci:hover { border-color: rgba(255,208,10,.4); box-shadow: 0 0 30px rgba(255,208,10,.1); }
+    .compliance-card.pci::before { background: linear-gradient(90deg, var(--yellow), rgba(255,208,10,.3)); }
+    .compliance-card.phi { border-color: rgba(255,45,85,.15); }
+    .compliance-card.phi:hover { border-color: rgba(255,45,85,.4); box-shadow: var(--glow-red); }
+    .compliance-card.phi::before { background: linear-gradient(90deg, var(--red), rgba(255,45,85,.3)); }
+    .compliance-card.pii { border-color: rgba(61,142,240,.15); }
+    .compliance-card.pii:hover { border-color: rgba(61,142,240,.4); box-shadow: 0 0 30px rgba(61,142,240,.12); }
+    .compliance-card.pii::before { background: linear-gradient(90deg, var(--blue), rgba(61,142,240,.3)); }
     .compliance-icon {
-      width: 44px; height: 44px;
-      border-radius: 10px;
+      width: 46px; height: 46px; border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+      font-size: 22px; flex-shrink: 0;
     }
-    .pci  .compliance-icon { background: rgba(245,158,11,.15); }
-    .phi  .compliance-icon { background: rgba(239,68,68,.15); }
-    .pii  .compliance-icon { background: rgba(61,116,232,.15); }
-
-    .compliance-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .compliance-card p  { font-size: 12px; color: var(--muted); line-height: 1.5; }
-
+    .pci .compliance-icon { background: rgba(255,208,10,.1); box-shadow: 0 0 16px rgba(255,208,10,.15); }
+    .phi .compliance-icon { background: rgba(255,45,85,.1);  box-shadow: var(--glow-red); }
+    .pii .compliance-icon { background: rgba(61,142,240,.1); box-shadow: var(--glow-cyan); }
+    .compliance-card h3 { font-size: 14.5px; font-weight: 800; margin-bottom: 5px; color: #fff; }
+    .compliance-card p  { font-size: 12px; color: var(--muted); line-height: 1.55; }
     .status-pill {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 600; padding: 3px 10px;
-      border-radius: 12px; margin-top: 8px;
+      font-size: 10.5px; font-weight: 700; padding: 3px 10px;
+      border-radius: 12px; margin-top: 9px; letter-spacing: .03em;
     }
-    .pill-green { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
-    .pill-yellow{ background: rgba(245,158,11,.12); color: var(--yellow);border: 1px solid rgba(245,158,11,.3); }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill-green  { background: rgba(0,255,136,.08);  color: var(--green);  border: 1px solid rgba(0,255,136,.25);  box-shadow: var(--glow-green); }
+    .pill-yellow { background: rgba(255,208,10,.08); color: var(--yellow); border: 1px solid rgba(255,208,10,.25); }
+    .pill-red    { background: rgba(255,45,85,.08);  color: var(--red);    border: 1px solid rgba(255,45,85,.25);  }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse-dot 2s ease infinite; }
 
-    /* ── SECTION HEADER ── */
+    /* ═══════════════════════════════════════════════
+       SECTION HEADERS
+    ═══════════════════════════════════════════════ */
     .section-header {
       display: flex; align-items: center; gap: 10px;
-      margin: 32px 0 16px;
-      font-size: 16px; font-weight: 700;
-      color: #fff;
+      margin: 36px 0 18px;
+      font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.2px;
     }
     .section-header::after {
       content: ''; flex: 1; height: 1px;
-      background: linear-gradient(to right, var(--border), transparent);
+      background: linear-gradient(to right, rgba(255,107,53,.2), transparent);
     }
     .section-icon {
-      width: 28px; height: 28px; border-radius: 6px;
+      width: 30px; height: 30px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 15px;
+      font-size: 15px; flex-shrink: 0;
     }
 
-    /* ── 2-COLUMN GRID ── */
+    /* ═══════════════════════════════════════════════
+       GRIDS
+    ═══════════════════════════════════════════════ */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
 
-    /* ── GENERIC CARD ── */
+    /* ═══════════════════════════════════════════════
+       GENERIC CARD
+    ═══════════════════════════════════════════════ */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-lg);
       padding: 20px 22px;
+      transition: border-color var(--t);
     }
-    .card h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    .card h4 {
+      font-size: 13.5px; font-weight: 800; color: #fff;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
 
-    /* ── SIGNAL STACK (Logs/Metrics/Traces/Profiles) ── */
+    /* ═══════════════════════════════════════════════
+       SIGNAL STACK
+    ═══════════════════════════════════════════════ */
     .signal-grid {
-      display: grid;
-      grid-template-columns: repeat(4,1fr);
-      gap: 14px;
-      margin-bottom: 32px;
+      display: grid; grid-template-columns: repeat(6,1fr);
+      gap: 12px; margin-bottom: 32px;
     }
     .signal-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 18px 14px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      transition: border-color .2s;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 14px 16px;
+      text-align: center; position: relative; overflow: hidden;
+      transition: border-color var(--t), transform var(--t), box-shadow var(--t);
+      cursor: default;
     }
-    .signal-card:hover { border-color: var(--accent); }
-    .signal-card .sig-icon { font-size: 28px; margin-bottom: 8px; }
-    .signal-card h3 { font-size: 14px; font-weight: 700; color: #fff; }
-    .signal-card p  { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+    .signal-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+      opacity: 0; transition: opacity var(--t);
+    }
+    .signal-card:hover { transform: translateY(-4px); }
+    .signal-card:hover::before { opacity: 1; }
+    .signal-card .sig-icon { font-size: 26px; margin-bottom: 9px; }
+    .signal-card h3 { font-size: 13px; font-weight: 800; color: #fff; letter-spacing: -0.2px; }
+    .signal-card p  { font-size: 10.5px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
     .signal-tag {
       display: inline-block; margin-top: 10px;
-      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      font-size: 9.5px; font-weight: 700; padding: 2px 8px;
       border-radius: 10px; letter-spacing: .5px; text-transform: uppercase;
     }
+    .sig-loki     { border-color:rgba(61,142,240,.4)!important; }
+    .sig-loki:hover     { border-color:rgba(61,142,240,.7)!important; box-shadow:0 0 20px rgba(61,142,240,.1); }
+    .sig-mimir    { border-color:rgba(255,107,53,.3)!important; }
+    .sig-mimir:hover    { border-color:rgba(255,107,53,.6)!important; box-shadow:var(--glow-orange); }
+    .sig-tempo    { border-color:rgba(0,212,255,.3)!important; }
+    .sig-tempo:hover    { border-color:rgba(0,212,255,.6)!important; box-shadow:var(--glow-cyan); }
+    .sig-pyroscope{ border-color:rgba(244,114,182,.3)!important; }
+    .sig-pyroscope:hover{ border-color:rgba(244,114,182,.6)!important; box-shadow:0 0 20px rgba(244,114,182,.15); }
+    .sig-faro     { border-color:rgba(45,212,191,.3)!important; }
+    .sig-faro:hover     { border-color:rgba(45,212,191,.6)!important; box-shadow:0 0 20px rgba(45,212,191,.12); }
+    .sig-alertmgr { border-color:rgba(255,208,10,.3)!important; }
+    .sig-alertmgr:hover { border-color:rgba(255,208,10,.6)!important; box-shadow:0 0 20px rgba(255,208,10,.12); }
 
-    /* ── POLICY TABLE ── */
-    .policy-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    .policy-table th {
-      background: var(--bg); color: var(--muted);
-      text-transform: uppercase; letter-spacing: .6px; font-size: 11px;
-      padding: 10px 14px; text-align: left;
-      border-bottom: 1px solid var(--border);
+    /* ═══════════════════════════════════════════════
+       ARCHITECTURE DIAGRAM
+    ═══════════════════════════════════════════════ */
+    .arch {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px; overflow-x: auto;
     }
-    .policy-table td { padding: 10px 14px; border-bottom: 1px solid rgba(42,49,80,.6); }
-    .policy-table tr:last-child td { border-bottom: none; }
-    .policy-table tr:hover td { background: rgba(255,255,255,.02); }
+    .arch-flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: nowrap; min-width: 800px;
+    }
+    .arch-node {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 110px;
+      transition: border-color var(--t), box-shadow var(--t);
+    }
+    .arch-node:hover { border-color: rgba(255,107,53,.4); box-shadow: var(--glow-orange); }
+    .arch-node .node-icon  { font-size: 22px; }
+    .arch-node .node-label { font-size: 11px; font-weight: 800; margin-top: 5px; color: #fff; }
+    .arch-node .node-sub   { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+    .arch-arrow { padding: 0 6px; color: rgba(255,107,53,.5); font-size: 20px; animation: arrow-pulse 2s ease-in-out infinite; }
+    @keyframes arrow-pulse { 0%,100%{opacity:.4}50%{opacity:1} }
+    .arch-node.highlighted { border-color: rgba(255,107,53,.5); background: rgba(255,107,53,.05); box-shadow: var(--glow-orange); }
+    .arch-node.guard       { border-color: rgba(255,45,85,.5);  background: rgba(255,45,85,.05);  box-shadow: var(--glow-red); }
+    .arch-node.ai-node     { border-color: rgba(139,92,246,.5); background: rgba(139,92,246,.05); box-shadow: 0 0 20px rgba(139,92,246,.2); }
 
-    /* ── PROMPT SECTION ── */
+    /* ═══════════════════════════════════════════════
+       PROMPT / CODE BLOCKS
+    ═══════════════════════════════════════════════ */
     .prompt-block {
-      background: #0a0d1a;
+      background: #080a14;
       border: 1px solid var(--border);
       border-left: 3px solid var(--purple);
-      border-radius: var(--radius);
+      border-radius: var(--radius-lg);
       padding: 20px 24px;
       margin-bottom: 16px;
       position: relative;
+      transition: border-color var(--t);
     }
+    .prompt-block:hover { border-color: rgba(255,255,255,0.12); }
     .prompt-block .prompt-label {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; color: var(--purple); margin-bottom: 10px;
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.2px; margin-bottom: 12px;
     }
     .prompt-block pre {
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 12.5px; line-height: 1.7; color: #cdd6f4;
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 12px; line-height: 1.75; color: #c8d3f5;
       white-space: pre-wrap; word-break: break-word;
     }
     .prompt-block .copy-btn {
       position: absolute; top: 16px; right: 16px;
-      background: rgba(139,92,246,.15); color: var(--purple);
-      border: 1px solid rgba(139,92,246,.3); border-radius: 6px;
-      padding: 4px 12px; font-size: 11px; cursor: pointer;
-      font-weight: 600; transition: background .2s;
+      background: rgba(139,92,246,.12); color: var(--purple);
+      border: 1px solid rgba(139,92,246,.3); border-radius: 7px;
+      padding: 4px 13px; font-size: 11px; cursor: none;
+      font-weight: 700; transition: all var(--t); letter-spacing: .03em;
     }
-    .prompt-block .copy-btn:hover { background: rgba(139,92,246,.3); }
+    .prompt-block .copy-btn:hover { background: rgba(139,92,246,.28); transform: translateY(-1px); }
 
-    /* ── ARCH DIAGRAM ── */
-    .arch {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      overflow-x: auto;
+    /* ═══════════════════════════════════════════════
+       TABLES (policy, rbac)
+    ═══════════════════════════════════════════════ */
+    .policy-table, .rbac-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .policy-table th, .rbac-table th {
+      background: rgba(0,0,0,0.3); color: var(--muted);
+      text-transform: uppercase; letter-spacing: .7px; font-size: 10.5px; font-weight: 700;
+      padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border);
     }
-    .arch-flow {
-      display: flex; align-items: center; justify-content: center;
-      gap: 0; flex-wrap: nowrap; min-width: 700px;
+    .policy-table td, .rbac-table td {
+      padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
     }
-    .arch-node {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      text-align: center;
-      min-width: 100px;
-    }
-    .arch-node .node-icon { font-size: 20px; }
-    .arch-node .node-label { font-size: 11px; font-weight: 700; margin-top: 4px; color: #fff; }
-    .arch-node .node-sub   { font-size: 10px; color: var(--muted); }
-    .arch-arrow {
-      padding: 0 6px;
-      color: var(--muted); font-size: 18px;
-    }
-    .arch-node.highlighted { border-color: var(--accent); background: rgba(244,104,0,.06); }
+    .policy-table tr:last-child td, .rbac-table tr:last-child td { border-bottom: none; }
+    .policy-table tr:hover td, .rbac-table tr:hover td { background: rgba(255,255,255,0.025); }
 
-    /* ── RISK MATRIX ── */
+    /* ═══════════════════════════════════════════════
+       RISK & CHECKLISTS
+    ═══════════════════════════════════════════════ */
     .risk-item {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(42,49,80,.5);
+      display: flex; align-items: flex-start; gap: 13px;
+      padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
     }
     .risk-item:last-child { border-bottom: none; }
     .risk-level {
-      width: 60px; text-align: center;
-      padding: 3px 0; border-radius: 6px;
-      font-size: 10px; font-weight: 700; text-transform: uppercase; flex-shrink: 0;
+      width: 58px; text-align: center; padding: 3px 0; border-radius: 6px;
+      font-size: 9.5px; font-weight: 800; text-transform: uppercase; flex-shrink: 0; letter-spacing: .05em;
     }
-    .risk-high   { background: rgba(239,68,68,.15); color: var(--red);    border: 1px solid rgba(239,68,68,.3); }
-    .risk-med    { background: rgba(245,158,11,.15); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
-    .risk-low    { background: rgba(34,197,94,.12); color: var(--green);   border: 1px solid rgba(34,197,94,.3); }
-    .risk-text h5 { font-size: 13px; font-weight: 600; color: #fff; }
-    .risk-text p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-    /* ── TOGGLE TABS ── */
-    .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
-    .tab {
-      padding: 6px 16px; border-radius: 6px; font-size: 12px;
-      font-weight: 600; cursor: pointer; border: 1px solid var(--border);
-      background: var(--surface); color: var(--muted); transition: all .2s;
-    }
-    .tab.active, .tab:hover {
-      background: rgba(244,104,0,.12); color: var(--accent);
-      border-color: rgba(244,104,0,.4);
-    }
-
-    /* ── CHECKLIST ── */
+    .risk-high { background: rgba(255,45,85,.12);  color: var(--red);    border: 1px solid rgba(255,45,85,.3);   box-shadow: var(--glow-red); }
+    .risk-med  { background: rgba(255,208,10,.12); color: var(--yellow); border: 1px solid rgba(255,208,10,.3); }
+    .risk-low  { background: rgba(0,255,136,.08);  color: var(--green);  border: 1px solid rgba(0,255,136,.25); }
+    .risk-text h5 { font-size: 13px; font-weight: 700; color: #fff; }
+    .risk-text p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
     .checklist { list-style: none; }
     .checklist li {
-      display: flex; align-items: flex-start; gap: 8px;
-      padding: 6px 0; font-size: 13px; color: var(--text);
-      border-bottom: 1px dashed rgba(42,49,80,.5);
+      display: flex; align-items: flex-start; gap: 9px;
+      padding: 7px 0; font-size: 12.5px; color: var(--text);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
     .checklist li:last-child { border-bottom: none; }
-    .check-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .check-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
 
-    /* ── FOOTER ── */
-    footer {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      text-align: center;
-      padding: 20px;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 48px;
-    }
-
-    /* ── RBAC MATRIX ── */
-    .rbac-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    .rbac-table th {
-      background: var(--bg); color: var(--muted);
-      text-transform: uppercase; letter-spacing: .6px; font-size: 11px;
-      padding: 10px 14px; text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    .rbac-table td { padding: 9px 14px; border-bottom: 1px solid rgba(42,49,80,.5); vertical-align: middle; }
-    .rbac-table tr:last-child td { border-bottom: none; }
-    .rbac-table tr:hover td { background: rgba(255,255,255,.02); }
-    .perm-yes  { color: var(--green);  font-size: 15px; }
-    .perm-no   { color: var(--red);    font-size: 15px; }
-    .perm-ro   { color: var(--yellow); font-size: 13px; font-weight:600; }
-    .perm-cond { color: var(--blue);   font-size: 13px; font-weight:600; }
-
+    /* ═══════════════════════════════════════════════
+       ROLE BADGES & PERMISSION ICONS
+    ═══════════════════════════════════════════════ */
     .role-badge {
       display: inline-block; padding: 3px 10px; border-radius: 12px;
       font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
     }
-    .role-admin    { background:rgba(239,68,68,.12);  color:var(--red);    border:1px solid rgba(239,68,68,.3); }
-    .role-editor   { background:rgba(244,104,0,.12);  color:var(--accent); border:1px solid rgba(244,104,0,.3); }
-    .role-viewer   { background:rgba(34,197,94,.10);  color:var(--green);  border:1px solid rgba(34,197,94,.3); }
-    .role-ai       { background:rgba(139,92,246,.12); color:var(--purple); border:1px solid rgba(139,92,246,.3); }
-    .role-sa       { background:rgba(20,184,166,.12); color:var(--teal);   border:1px solid rgba(20,184,166,.3); }
-    .role-readonly { background:rgba(136,146,176,.12);color:var(--muted);  border:1px solid rgba(136,146,176,.3); }
+    .role-admin    { background:rgba(255,45,85,.1);    color:var(--red);    border:1px solid rgba(255,45,85,.3); }
+    .role-editor   { background:rgba(255,107,53,.1);   color:var(--accent); border:1px solid rgba(255,107,53,.3); }
+    .role-viewer   { background:rgba(0,255,136,.07);   color:var(--green);  border:1px solid rgba(0,255,136,.25); }
+    .role-ai       { background:rgba(139,92,246,.1);   color:var(--purple); border:1px solid rgba(139,92,246,.3); }
+    .role-sa       { background:rgba(45,212,191,.1);   color:var(--teal);   border:1px solid rgba(45,212,191,.3); }
+    .role-readonly { background:rgba(107,117,148,.1);  color:var(--muted);  border:1px solid rgba(107,117,148,.3); }
+    .perm-yes  { color: var(--green);  font-size: 15px; }
+    .perm-no   { color: var(--red);    font-size: 15px; }
+    .perm-ro   { color: var(--yellow); font-size: 12.5px; font-weight:700; }
+    .perm-cond { color: var(--cyan);   font-size: 12.5px; font-weight:700; }
 
-    /* ── SERVICE ACCOUNT CARDS ── */
+    /* ═══════════════════════════════════════════════
+       SERVICE ACCOUNTS
+    ═══════════════════════════════════════════════ */
     .sa-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
     .sa-card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 18px 20px;
+      border-radius: var(--radius-lg); padding: 18px 20px;
+      transition: border-color var(--t), transform var(--t), box-shadow var(--t);
     }
-    .sa-card h5 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px; display:flex;align-items:center;gap:7px; }
-    .sa-card p  { font-size: 12px; color: var(--muted); line-height:1.5; }
-    .sa-card code { font-size: 11px; background: var(--bg); padding:2px 6px; border-radius:4px; color: var(--teal); }
-    .sa-token-scope {
-      margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;
-    }
+    .sa-card:hover { transform: translateY(-3px); }
+    .sa-card h5 { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 7px; display:flex;align-items:center;gap:7px; }
+    .sa-card p  { font-size: 12px; color: var(--muted); line-height:1.55; }
+    .sa-card code { font-size: 10.5px; background: rgba(0,0,0,0.35); padding:2px 7px; border-radius:5px; color: var(--teal); font-family: monospace; }
+    .sa-token-scope { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 5px; }
     .scope-pill {
       font-size: 10px; padding: 2px 8px; border-radius: 10px;
-      background: rgba(42,49,80,.8); color: var(--muted);
-      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04); color: var(--muted);
+      border: 1px solid var(--border); transition: all var(--t);
     }
+    .scope-pill:hover { background: rgba(255,107,53,.08); color: var(--accent); border-color: rgba(255,107,53,.3); }
 
-    /* ── BACKEND STACK CARDS ── */
+    /* ═══════════════════════════════════════════════
+       BACKEND CARDS
+    ═══════════════════════════════════════════════ */
     .backend-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
     .backend-card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px 22px;
+      border-radius: var(--radius-lg); padding: 20px 22px;
+      transition: border-color var(--t);
     }
-    .backend-card h5 { font-size: 14px; font-weight:700; color:#fff; margin-bottom:10px; display:flex;align-items:center;gap:8px; }
-    .cfg-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed rgba(42,49,80,.5); font-size:12.5px; }
+    .backend-card h5 { font-size: 14px; font-weight:800; color:#fff; margin-bottom:12px; display:flex;align-items:center;gap:9px; }
+    .cfg-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12.5px; }
     .cfg-row:last-child { border-bottom:none; }
     .cfg-key   { color:var(--muted); }
     .cfg-value { color:var(--text); font-weight:600; }
@@ -357,30 +468,213 @@
     .cfg-value.warn { color:var(--yellow); }
     .cfg-value.bad  { color:var(--red); }
 
-    /* responsive */
-    @media (max-width: 900px) {
-      .sa-grid, .backend-grid { grid-template-columns: 1fr; }
+    /* ═══════════════════════════════════════════════
+       TOKEN BUDGET CARDS
+    ═══════════════════════════════════════════════ */
+    .token-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+    .token-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 20px;
+      transition: border-color var(--t), transform var(--t);
     }
+    .token-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
+    .token-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .token-card h5 { font-size: 13px; font-weight: 800; color: #fff; }
+    .token-pct { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+    .token-bar-bg { height: 5px; background: rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+    .token-bar-fill { height: 100%; border-radius: 10px; transition: width 1.5s cubic-bezier(.4,0,.2,1); }
+    .token-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 3px 0; }
+    .token-row span:first-child { color: var(--muted); }
+    .token-row span:last-child { color: var(--text); font-weight: 600; }
+
+    /* ═══════════════════════════════════════════════
+       MCP TOOL CARDS
+    ═══════════════════════════════════════════════ */
+    .mcp-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .mcp-tool-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px 18px;
+      transition: border-color var(--t), transform var(--t), box-shadow var(--t);
+    }
+    .mcp-tool-card:hover { transform: translateY(-3px); border-color: rgba(139,92,246,.4); box-shadow: 0 0 20px rgba(139,92,246,.1); }
+    .mcp-tool-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .mcp-tool-name { font-size: 12.5px; font-weight: 800; color: #fff; font-family: monospace; }
+    .mcp-tool-desc { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+    .mcp-status { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .mcp-ok    { background: rgba(0,255,136,.08);  color: var(--green);  border: 1px solid rgba(0,255,136,.25); }
+    .mcp-warn  { background: rgba(255,208,10,.08); color: var(--yellow); border: 1px solid rgba(255,208,10,.25); }
+    .mcp-block { background: rgba(255,45,85,.08);  color: var(--red);    border: 1px solid rgba(255,45,85,.25); }
+
+    /* ═══════════════════════════════════════════════
+       AUDIT LOG
+    ═══════════════════════════════════════════════ */
+    .audit-terminal {
+      background: #060810; border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden; font-family: 'SF Mono','Cascadia Code','Fira Code',monospace;
+    }
+    .audit-header {
+      background: var(--surface); padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .audit-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .audit-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; margin-left: 4px; }
+    .audit-body { padding: 16px; max-height: 340px; overflow-y: auto; }
+    .audit-body::-webkit-scrollbar { width: 4px; }
+    .audit-body::-webkit-scrollbar-track { background: transparent; }
+    .audit-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .audit-line { font-size: 11.5px; line-height: 1.8; display: flex; gap: 12px; padding: 1px 0; }
+    .audit-time { color: var(--muted2); flex-shrink: 0; }
+    .audit-level { flex-shrink: 0; font-weight: 700; }
+    .audit-level.info  { color: var(--cyan); }
+    .audit-level.ok    { color: var(--green); }
+    .audit-level.warn  { color: var(--yellow); }
+    .audit-level.block { color: var(--red); }
+    .audit-msg { color: #b8c4e0; }
+    .audit-msg code { background: rgba(255,255,255,0.06); padding: 0 5px; border-radius: 3px; font-size: 11px; color: var(--teal); }
+
+    /* ═══════════════════════════════════════════════
+       FARO / RUM
+    ═══════════════════════════════════════════════ */
+    .faro-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+    .faro-metric {
+      background: var(--card); border: 1px solid rgba(45,212,191,.15);
+      border-radius: var(--radius); padding: 14px 16px; text-align: center;
+    }
+    .faro-metric-val { font-size: 24px; font-weight: 900; color: var(--teal); letter-spacing: -1px; }
+    .faro-metric-lbl { font-size: 10.5px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* ═══════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════ */
+    footer {
+      background: var(--surface); border-top: 1px solid var(--border);
+      text-align: center; padding: 24px; color: var(--muted);
+      font-size: 12px; margin-top: 56px; letter-spacing: .03em;
+    }
+    footer span { color: var(--accent); }
+
+    /* ═══════════════════════════════════════════════
+       TABS
+    ═══════════════════════════════════════════════ */
+    .tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tab {
+      padding: 6px 16px; border-radius: 7px; font-size: 12px;
+      font-weight: 700; cursor: none; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); transition: all var(--t);
+    }
+    .tab.active, .tab:hover { background: rgba(255,107,53,.1); color: var(--accent); border-color: rgba(255,107,53,.35); }
+
+    /* ═══════════════════════════════════════════════
+       SCROLLBAR
+    ═══════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,107,53,.25); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,107,53,.5); }
+
+    /* ═══════════════════════════════════════════════
+       ANIMATIONS
+    ═══════════════════════════════════════════════ */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ═══════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .signal-grid { grid-template-columns: repeat(3,1fr); }
+      .gov-metrics-bar { grid-template-columns: repeat(3,1fr); }
+      .token-grid, .mcp-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 900px) {
+      header { padding: 20px; }
       main { padding: 20px; }
-      .compliance-ribbon, .grid-2, .grid-3, .signal-grid { grid-template-columns: 1fr; }
+      .sa-grid, .backend-grid { grid-template-columns: 1fr; }
+      .compliance-ribbon, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .signal-grid { grid-template-columns: repeat(2,1fr); }
+      .gov-metrics-bar { grid-template-columns: repeat(2,1fr); }
       .arch-flow { flex-direction: column; min-width: unset; }
       .arch-arrow { transform: rotate(90deg); }
+      .faro-metrics, .token-grid, .mcp-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 480px) {
+      .signal-grid, .faro-metrics { grid-template-columns: 1fr 1fr; }
+      .gov-metrics-bar { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 
+<!-- Custom cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
 <!-- ════════════════════ HEADER ════════════════════ -->
 <header>
-  <div class="header-left">
-    <h1>🛡️ AI Enablement <span>Governance</span> — Observability Platform</h1>
-    <p>Enterprise Policy · Compliance Controls · LLM Data Safety · MCP Server Governance</p>
+  <div class="header-top">
+    <div class="header-logo">
+      <div class="header-logo-icon">🛡️</div>
+      <div class="header-left">
+        <h1>AI Enablement <span>Governance</span> — Observability Platform</h1>
+        <p>Enterprise Policy · Compliance Controls · LLM Data Safety · MCP Server Governance</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-grafana">Grafana Enterprise</span>
+      <span class="badge badge-loki">Loki</span>
+      <span class="badge badge-tempo">Tempo</span>
+      <span class="badge badge-pyroscope">Pyroscope</span>
+      <span class="badge badge-faro">Faro RUM</span>
+      <span class="badge badge-mcp">MCP Server</span>
+      <span class="badge badge-enterprise">Enterprise</span>
+    </div>
   </div>
-  <div class="header-badges">
-    <span class="badge badge-grafana">Grafana Enterprise</span>
-    <span class="badge badge-loki">Loki Stack</span>
-    <span class="badge badge-mcp">MCP Server</span>
-    <span class="badge badge-enterprise">Enterprise Plugins</span>
+
+  <!-- Live Governance Metrics Bar -->
+  <div class="gov-metrics-bar">
+    <div class="gov-metric gm-green">
+      <div class="gov-metric-icon">✅</div>
+      <div>
+        <div class="gov-metric-val" id="gm-compliance">98.4%</div>
+        <div class="gov-metric-lbl">Compliance Score</div>
+      </div>
+    </div>
+    <div class="gov-metric gm-orange">
+      <div class="gov-metric-icon">🔒</div>
+      <div>
+        <div class="gov-metric-val" id="gm-redactions">12,847</div>
+        <div class="gov-metric-lbl">Redactions Today</div>
+      </div>
+    </div>
+    <div class="gov-metric gm-red">
+      <div class="gov-metric-icon">🚫</div>
+      <div>
+        <div class="gov-metric-val" id="gm-pci">3</div>
+        <div class="gov-metric-lbl">PCI Blocks</div>
+      </div>
+    </div>
+    <div class="gov-metric gm-cyan">
+      <div class="gov-metric-icon">🪙</div>
+      <div>
+        <div class="gov-metric-val" id="gm-tokens">4.2M</div>
+        <div class="gov-metric-lbl">Active Tokens</div>
+      </div>
+    </div>
+    <div class="gov-metric gm-purple">
+      <div class="gov-metric-icon">🤖</div>
+      <div>
+        <div class="gov-metric-val" id="gm-llm">1,284</div>
+        <div class="gov-metric-lbl">LLM Calls / hr</div>
+      </div>
+    </div>
+    <div class="gov-metric gm-yellow">
+      <div class="gov-metric-icon"><span class="live-dot"></span></div>
+      <div>
+        <div class="gov-metric-val" id="gm-audit">48,291</div>
+        <div class="gov-metric-lbl">Audit Events</div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -425,29 +719,41 @@
   </div>
 
   <div class="signal-grid">
-    <div class="signal-card">
+    <div class="signal-card sig-loki reveal">
       <div class="sig-icon">📋</div>
       <h3>Logs</h3>
-      <p>Loki · LogQL · Pipelines<br>AI-assisted log anomaly detection with PII redaction pre-inference</p>
-      <span class="signal-tag" style="background:rgba(61,116,232,.12);color:#3d74e8;border:1px solid rgba(61,116,232,.3)">Loki</span>
+      <p>Loki · LogQL · Pipelines<br>AI log anomaly detection with PII redaction pre-inference</p>
+      <span class="signal-tag" style="background:rgba(61,142,240,.12);color:var(--blue);border:1px solid rgba(61,142,240,.3)">Loki</span>
     </div>
-    <div class="signal-card">
+    <div class="signal-card sig-mimir reveal">
       <div class="sig-icon">📈</div>
       <h3>Metrics</h3>
-      <p>Prometheus · Mimir · Cortex<br>LLM cost, token usage, and inference latency metrics surfaced in Grafana</p>
-      <span class="signal-tag" style="background:rgba(244,104,0,.12);color:#f46800;border:1px solid rgba(244,104,0,.3)">Prometheus</span>
+      <p>Mimir · PromQL · Grafana<br>LLM cost, token usage, and inference latency in real time</p>
+      <span class="signal-tag" style="background:rgba(255,107,53,.12);color:var(--accent);border:1px solid rgba(255,107,53,.3)">Mimir</span>
     </div>
-    <div class="signal-card">
+    <div class="signal-card sig-tempo reveal">
       <div class="sig-icon">🔗</div>
       <h3>Traces</h3>
-      <p>Tempo · OpenTelemetry<br>Distributed trace context attached to every MCP AI call for full lineage</p>
-      <span class="signal-tag" style="background:rgba(20,184,166,.12);color:#14b8a6;border:1px solid rgba(20,184,166,.3)">Tempo</span>
+      <p>Tempo · TraceQL · OTEL<br>Distributed trace context on every MCP AI call for full lineage</p>
+      <span class="signal-tag" style="background:rgba(0,212,255,.12);color:var(--cyan);border:1px solid rgba(0,212,255,.3)">Tempo</span>
     </div>
-    <div class="signal-card">
+    <div class="signal-card sig-pyroscope reveal">
       <div class="sig-icon">🔥</div>
       <h3>Profiles</h3>
-      <p>Pyroscope · Continuous Profiling<br>CPU/memory profiling of AI model inference pods for performance governance</p>
-      <span class="signal-tag" style="background:rgba(139,92,246,.12);color:#8b5cf6;border:1px solid rgba(139,92,246,.3)">Pyroscope</span>
+      <p>Pyroscope · Continuous Profiling<br>CPU/memory profiling of AI model inference pods</p>
+      <span class="signal-tag" style="background:rgba(244,114,182,.12);color:var(--pink);border:1px solid rgba(244,114,182,.3)">Pyroscope</span>
+    </div>
+    <div class="signal-card sig-faro reveal">
+      <div class="sig-icon">🌐</div>
+      <h3>Frontend RUM</h3>
+      <p>Faro · Web Vitals · JS Errors<br>Browser-side AI interaction tracking, PII stripping at SDK level</p>
+      <span class="signal-tag" style="background:rgba(45,212,191,.12);color:var(--teal);border:1px solid rgba(45,212,191,.3)">Faro</span>
+    </div>
+    <div class="signal-card sig-alertmgr reveal">
+      <div class="sig-icon">🔔</div>
+      <h3>Alerting</h3>
+      <p>Alertmanager · Grafana OnCall<br>AI-classified alert routing with noise suppression governance</p>
+      <span class="signal-tag" style="background:rgba(255,208,10,.12);color:var(--yellow);border:1px solid rgba(255,208,10,.3)">Alertmanager</span>
     </div>
   </div>
 
@@ -497,8 +803,278 @@
     </div>
   </div>
 
+  <!-- ════════════════════ FARO RUM GOVERNANCE ════════════════════ -->
+  <div class="section-header reveal">
+    <div class="section-icon" style="background:rgba(45,212,191,.12)">🌐</div>
+    Faro RUM Governance — Frontend Observability Data Safety
+  </div>
+
+  <!-- Web Vitals KPIs -->
+  <div class="faro-metrics reveal">
+    <div class="faro-metric">
+      <div class="faro-metric-val" id="faro-lcp">2.1s</div>
+      <div class="faro-metric-lbl">LCP (P75)</div>
+    </div>
+    <div class="faro-metric">
+      <div class="faro-metric-val" id="faro-inp">68ms</div>
+      <div class="faro-metric-lbl">INP (P75)</div>
+    </div>
+    <div class="faro-metric">
+      <div class="faro-metric-val" id="faro-cls">0.04</div>
+      <div class="faro-metric-lbl">CLS (P75)</div>
+    </div>
+    <div class="faro-metric">
+      <div class="faro-metric-val" id="faro-errors">12</div>
+      <div class="faro-metric-lbl">JS Errors / hr</div>
+    </div>
+  </div>
+
+  <div class="grid-2 reveal" style="margin-bottom:20px">
+    <div class="card">
+      <h4>🔒 Session Data Classification</h4>
+      <table class="policy-table">
+        <thead><tr><th>Data Type</th><th>Faro Field</th><th>AI Policy</th></tr></thead>
+        <tbody>
+          <tr><td>Session ID</td><td><code>session.id</code></td><td><span class="status-pill pill-yellow"><span class="dot"></span> Hash before LLM</span></td></tr>
+          <tr><td>User ID</td><td><code>user.id</code></td><td><span class="status-pill pill-yellow"><span class="dot"></span> Hash before LLM</span></td></tr>
+          <tr><td>User Email</td><td><code>user.email</code></td><td><span class="status-pill pill-red"><span class="dot"></span> Block — PII</span></td></tr>
+          <tr><td>Page URL</td><td><code>page.url</code></td><td><span class="status-pill pill-green"><span class="dot"></span> Allowed (sanitised)</span></td></tr>
+          <tr><td>Stack Trace</td><td><code>exception.stacktrace</code></td><td><span class="status-pill pill-green"><span class="dot"></span> Allowed</span></td></tr>
+          <tr><td>Browser Fingerprint</td><td><code>meta.browser.*</code></td><td><span class="status-pill pill-yellow"><span class="dot"></span> Aggregated only</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h4>🧹 JS Error PII Stripping</h4>
+      <div class="prompt-block" style="margin:0;border-left-color:var(--teal)">
+        <div class="prompt-label" style="color:var(--teal)">Faro SDK — beforeSend Hook</div>
+        <button class="copy-btn" onclick="copyPrompt(this)" style="color:var(--teal);border-color:rgba(45,212,191,.3);background:rgba(45,212,191,.08)">Copy</button>
+        <pre>faro.init({
+  // Strip PII from events before send
+  beforeSend: (event) => {
+    // Mask email in error messages
+    if (event.type === 'exception') {
+      event.payload.value = event.payload.value
+        .replace(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi, '[EMAIL]')
+        .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[IP]')
+        .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]');
+    }
+    // Remove user identity from all events
+    delete event.meta?.user?.email;
+    delete event.meta?.user?.name;
+    return event;
+  },
+  // Aggregate sessions — no individual tracking
+  sessionTrackingEnabled: true,
+  isolatedSessions: true,
+});</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card reveal" style="margin-bottom:32px">
+    <h4>📊 Faro Governance Prompt — Web Vitals & Error Analysis</h4>
+    <div class="prompt-block" style="margin:0;border-left-color:var(--teal)">
+      <div class="prompt-label" style="color:var(--teal)">Faro AI Analysis Prompt</div>
+      <button class="copy-btn" onclick="copyPrompt(this)" style="color:var(--teal);border-color:rgba(45,212,191,.3);background:rgba(45,212,191,.08)">Copy</button>
+      <pre>You are analysing Faro Real User Monitoring (RUM) data from the Grafana observability platform.
+All user-identifiable data has been stripped by the Faro SDK beforeSend hook.
+
+Context:
+- App: {app_name} | Page: {page_route} | Environment: {env}
+- Time window: {start_time} to {end_time}
+- Web Vitals data is pre-aggregated at P75 (no individual sessions)
+
+Tasks:
+1. Identify Core Web Vitals regressions: LCP > 2.5s (Poor), INP > 200ms (Poor), CLS > 0.1 (Poor)
+2. Cluster JavaScript errors by type and stack trace pattern
+3. Correlate frontend degradations with backend Tempo traces (if trace IDs available)
+4. Estimate affected user sessions as % buckets (not individual users)
+
+STRICT RULES:
+- NEVER reference individual session IDs or user IDs in your response
+- Only use aggregated percentile metrics (P50, P75, P95)
+- If [EMAIL] or [IP] tokens appear in error messages → flag as "PII strip validation needed"
+- Confidence: Low / Medium / High based on sample size</pre>
+    </div>
+  </div>
+
+  <!-- ════════════════════ TOKEN BUDGET & COST GOVERNANCE ════════════════════ -->
+  <div class="section-header reveal">
+    <div class="section-icon" style="background:rgba(255,208,10,.12)">🪙</div>
+    Token Budget &amp; Cost Governance
+  </div>
+
+  <div class="token-grid reveal">
+    <div class="token-card">
+      <div class="token-card-head">
+        <h5>Platform Engineering</h5>
+        <div class="token-pct" style="color:var(--green)">62%</div>
+      </div>
+      <div class="token-bar-bg"><div class="token-bar-fill" style="width:62%;background:linear-gradient(90deg,var(--green),var(--teal))"></div></div>
+      <div class="token-row"><span>Daily budget</span><span>500K tokens</span></div>
+      <div class="token-row"><span>Used today</span><span>310K tokens</span></div>
+      <div class="token-row"><span>Cost / day</span><span>$4.80 USD</span></div>
+      <div class="token-row"><span>Model tier</span><span>GPT-4o</span></div>
+    </div>
+    <div class="token-card">
+      <div class="token-card-head">
+        <h5>Security Operations</h5>
+        <div class="token-pct" style="color:var(--yellow)">78%</div>
+      </div>
+      <div class="token-bar-bg"><div class="token-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--yellow),var(--accent))"></div></div>
+      <div class="token-row"><span>Daily budget</span><span>300K tokens</span></div>
+      <div class="token-row"><span>Used today</span><span>234K tokens</span></div>
+      <div class="token-row"><span>Cost / day</span><span>$3.20 USD</span></div>
+      <div class="token-row"><span>Model tier</span><span>GPT-4o</span></div>
+    </div>
+    <div class="token-card">
+      <div class="token-card-head">
+        <h5>Developer Tools</h5>
+        <div class="token-pct" style="color:var(--red)">94%</div>
+      </div>
+      <div class="token-bar-bg"><div class="token-bar-fill" style="width:94%;background:linear-gradient(90deg,var(--red),#ff6b35)"></div></div>
+      <div class="token-row"><span>Daily budget</span><span>200K tokens</span></div>
+      <div class="token-row"><span>Used today</span><span>188K tokens</span></div>
+      <div class="token-row"><span>Cost / day</span><span>$2.60 USD</span></div>
+      <div class="token-row"><span>Model tier</span><span>GPT-4o-mini</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2 reveal" style="margin-bottom:32px">
+    <div class="card">
+      <h4>⚡ Rate Limiting Policy</h4>
+      <table class="policy-table">
+        <thead><tr><th>Scope</th><th>Limit</th><th>Window</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Per request</td><td>8,000 tokens</td><td>—</td><td><span class="mcp-status mcp-block">Hard block</span></td></tr>
+          <tr><td>Per user / hr</td><td>50,000 tokens</td><td>Rolling 1h</td><td><span class="mcp-status mcp-warn">Throttle</span></td></tr>
+          <tr><td>Per team / day</td><td>500,000 tokens</td><td>UTC day</td><td><span class="mcp-status mcp-warn">Alert + throttle</span></td></tr>
+          <tr><td>Cost alert</td><td>$50 USD</td><td>Rolling 24h</td><td><span class="mcp-status mcp-warn">PagerDuty alert</span></td></tr>
+          <tr><td>Emergency kill</td><td>Any</td><td>Manual</td><td><span class="mcp-status mcp-block">Disable team</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h4>🤖 Model Tier Controls</h4>
+      <table class="policy-table">
+        <thead><tr><th>Use Case</th><th>Model</th><th>Max Context</th><th>Approval</th></tr></thead>
+        <tbody>
+          <tr><td>Incident RCA</td><td><code>gpt-4o</code></td><td>128K</td><td><span class="mcp-status mcp-ok">Auto</span></td></tr>
+          <tr><td>Log summarisation</td><td><code>gpt-4o-mini</code></td><td>16K</td><td><span class="mcp-status mcp-ok">Auto</span></td></tr>
+          <tr><td>Compliance audit</td><td><code>gpt-4o</code></td><td>64K</td><td><span class="mcp-status mcp-warn">Supervisor</span></td></tr>
+          <tr><td>Bulk analysis</td><td><code>gpt-4o-mini</code></td><td>16K</td><td><span class="mcp-status mcp-ok">Auto</span></td></tr>
+          <tr><td>Sensitive data query</td><td>Blocked</td><td>—</td><td><span class="mcp-status mcp-block">Blocked</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MCP TOOL GOVERNANCE ════════════════════ -->
+  <div class="section-header reveal">
+    <div class="section-icon" style="background:rgba(139,92,246,.12)">🔧</div>
+    MCP Server Tool Governance — Per-Tool Rate Limits &amp; Circuit Breakers
+  </div>
+
+  <div class="mcp-grid reveal">
+    <div class="mcp-tool-card">
+      <div class="mcp-tool-head">
+        <span class="mcp-tool-name">mimir_query</span>
+        <span class="mcp-status mcp-ok"><span class="dot" style="background:var(--green)"></span> Active</span>
+      </div>
+      <div class="mcp-tool-desc">Execute PromQL instant queries against Mimir. Returns metric vectors with labels. Read-only. LLM cost: low (numeric data).</div>
+      <div class="token-row"><span style="color:var(--muted)">Rate limit</span><span>200 req/min</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Max context rows</span><span>500 series</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Circuit breaker</span><span>3 failures → 60s backoff</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII risk</span><span><span class="mcp-status mcp-ok">Low</span></span></div>
+    </div>
+    <div class="mcp-tool-card">
+      <div class="mcp-tool-head">
+        <span class="mcp-tool-name">loki_query</span>
+        <span class="mcp-status mcp-warn"><span class="dot" style="background:var(--yellow)"></span> Guarded</span>
+      </div>
+      <div class="mcp-tool-desc">Execute LogQL queries against Loki. Log content passes through PII redaction before LLM context injection. High PII risk.</div>
+      <div class="token-row"><span style="color:var(--muted)">Rate limit</span><span>100 req/min</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Max log lines</span><span>200 lines / query</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII scrub</span><span>Mandatory pipeline</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII risk</span><span><span class="mcp-status mcp-warn">High — guarded</span></span></div>
+    </div>
+    <div class="mcp-tool-card">
+      <div class="mcp-tool-head">
+        <span class="mcp-tool-name">tempo_search</span>
+        <span class="mcp-status mcp-ok"><span class="dot" style="background:var(--green)"></span> Active</span>
+      </div>
+      <div class="mcp-tool-desc">Search distributed traces via TraceQL. Returns span summaries and service topology. Trace IDs are safe to expose — no PII risk in standard tags.</div>
+      <div class="token-row"><span style="color:var(--muted)">Rate limit</span><span>150 req/min</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Max traces</span><span>50 traces / query</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Circuit breaker</span><span>3 failures → 30s backoff</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII risk</span><span><span class="mcp-status mcp-ok">Low</span></span></div>
+    </div>
+    <div class="mcp-tool-card">
+      <div class="mcp-tool-head">
+        <span class="mcp-tool-name">pyroscope_query</span>
+        <span class="mcp-status mcp-warn"><span class="dot" style="background:var(--yellow)"></span> Restricted</span>
+      </div>
+      <div class="mcp-tool-desc">Query CPU/memory/goroutine profiles. Flame graph data may contain internal function names and file paths — reviewed before LLM injection.</div>
+      <div class="token-row"><span style="color:var(--muted)">Rate limit</span><span>30 req/min</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Profiles in context</span><span>Top 50 frames only</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Source paths</span><span>Stripped to pkg name</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII risk</span><span><span class="mcp-status mcp-warn">Medium</span></span></div>
+    </div>
+    <div class="mcp-tool-card">
+      <div class="mcp-tool-head">
+        <span class="mcp-tool-name">faro_vitals</span>
+        <span class="mcp-status mcp-ok"><span class="dot" style="background:var(--green)"></span> Active</span>
+      </div>
+      <div class="mcp-tool-desc">Query Faro Core Web Vitals (LCP, INP, CLS, TTFB) as aggregated P75 percentiles. Individual session data is never exposed to LLM context.</div>
+      <div class="token-row"><span style="color:var(--muted)">Rate limit</span><span>200 req/min</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Granularity</span><span>P50 / P75 / P95 only</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Session IDs</span><span>Hashed — not raw</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII risk</span><span><span class="mcp-status mcp-ok">Low — aggregated</span></span></div>
+    </div>
+    <div class="mcp-tool-card">
+      <div class="mcp-tool-head">
+        <span class="mcp-tool-name">grafana_alerts</span>
+        <span class="mcp-status mcp-ok"><span class="dot" style="background:var(--green)"></span> Active</span>
+      </div>
+      <div class="mcp-tool-desc">Fetch active Grafana / Alertmanager alerts with labels and annotations. Alert text is reviewed for PII labels before context injection.</div>
+      <div class="token-row"><span style="color:var(--muted)">Rate limit</span><span>300 req/min</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Max alerts</span><span>100 per query</span></div>
+      <div class="token-row"><span style="color:var(--muted)">Label filter</span><span>PII labels stripped</span></div>
+      <div class="token-row"><span style="color:var(--muted)">PII risk</span><span><span class="mcp-status mcp-ok">Low</span></span></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ AUDIT TRAIL ════════════════════ -->
+  <div class="section-header reveal" style="margin-top:36px">
+    <div class="section-icon" style="background:rgba(0,212,255,.12)">📜</div>
+    AI Audit Trail — Loki-Backed Immutable Event Log
+  </div>
+
+  <div class="audit-terminal reveal" style="margin-bottom:32px">
+    <div class="audit-header">
+      <div class="audit-dot" style="background:#ff5f57"></div>
+      <div class="audit-dot" style="background:#febc2e"></div>
+      <div class="audit-dot" style="background:#28c840"></div>
+      <span class="live-dot" style="margin-left:8px"></span>
+      <span class="audit-title">mcp-audit-log · {app="mcp-server", env="prod"} · LIVE</span>
+    </div>
+    <div class="audit-body" id="audit-log">
+      <div class="audit-line"><span class="audit-time">14:32:01.412</span><span class="audit-level ok">OK   </span><span class="audit-msg">mimir_query executed · query=<code>rate(http_requests_total[5m])</code> · tokens=342 · user=sre-bot@platform</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:03.891</span><span class="audit-level ok">OK   </span><span class="audit-msg">loki_query executed · stream=<code>{app="checkout"}</code> · lines=87 · pii_scrub=applied · tokens=1204</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:05.221</span><span class="audit-level info">INFO </span><span class="audit-msg">tempo_search executed · traceql=<code>{ .service.name="checkout" && duration>2s }</code> · results=14</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:07.003</span><span class="audit-level warn">WARN </span><span class="audit-msg">token_budget alert · team=dev-tools · used=94% of daily budget · action=throttle_applied</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:09.774</span><span class="audit-level block">BLOCK</span><span class="audit-msg">pci_detection triggered · tool=loki_query · pattern=card_number · action=request_blocked · user=analyst@finance</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:11.100</span><span class="audit-level ok">OK   </span><span class="audit-msg">faro_vitals query · app=<code>checkout-ui</code> · vitals=LCP,INP,CLS · aggregation=P75 · tokens=88</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:14.555</span><span class="audit-level ok">OK   </span><span class="audit-msg">grafana_alerts query · state=firing · count=7 · pii_labels_stripped=2 · tokens=210</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:16.309</span><span class="audit-level info">INFO </span><span class="audit-msg">llm_response generated · model=gpt-4o · tokens_in=2847 · tokens_out=612 · latency_ms=1843 · confidence=High</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:18.003</span><span class="audit-level warn">WARN </span><span class="audit-msg">phi_stream_detected · stream_label=<code>sensitivity=phi</code> · tool=loki_query · action=request_blocked</span></div>
+      <div class="audit-line"><span class="audit-time">14:32:20.781</span><span class="audit-level ok">OK   </span><span class="audit-msg">pyroscope_query executed · app=<code>checkout-api</code> · profile_type=cpu · top_frames=50 · tokens=445</span></div>
+    </div>
+  </div>
+
   <!-- ════════════════════ GOVERNANCE PROMPT LIBRARY ════════════════════ -->
-  <div class="section-header">
+  <div class="section-header reveal">
     <div class="section-icon" style="background:rgba(139,92,246,.12)">🧠</div>
     AI Governance Prompt Library — MCP Server Templates
   </div>
@@ -1385,13 +1961,169 @@ spec:
 </footer>
 
 <script>
-  function copyPrompt(btn) {
-    const pre = btn.parentElement.querySelector('pre');
-    navigator.clipboard.writeText(pre.textContent).then(() => {
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 2000);
-    });
+/* ═══════════════════════════════════════════
+   1. CUSTOM CURSOR
+═══════════════════════════════════════════ */
+(function initCursor() {
+  const dot  = document.getElementById('cur-dot');
+  const ring = document.getElementById('cur-ring');
+  if (!dot || !ring) return;
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  document.querySelectorAll('a,button,.tab,.signal-card,.compliance-card,.mcp-tool-card,.token-card,.sa-card,.prompt-block').forEach(el => {
+    el.addEventListener('mouseenter', () => { ring.style.width='44px'; ring.style.height='44px'; ring.style.borderColor='rgba(0,212,255,.6)'; });
+    el.addEventListener('mouseleave', () => { ring.style.width='32px'; ring.style.height='32px'; ring.style.borderColor='rgba(255,107,53,.45)'; });
+  });
+  function animateCursor() {
+    dot.style.left  = mx + 'px';
+    dot.style.top   = my + 'px';
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(animateCursor);
   }
+  animateCursor();
+})();
+
+/* ═══════════════════════════════════════════
+   2. SCROLL REVEAL
+═══════════════════════════════════════════ */
+(function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  els.forEach(el => obs.observe(el));
+})();
+
+/* ═══════════════════════════════════════════
+   3. COPY PROMPT BUTTON
+═══════════════════════════════════════════ */
+function copyPrompt(btn) {
+  const block = btn.closest('.prompt-block');
+  const pre   = block ? block.querySelector('pre') : null;
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  }).catch(() => { btn.textContent = 'Error'; setTimeout(() => btn.textContent = 'Copy', 2000); });
+}
+
+/* ═══════════════════════════════════════════
+   4. ANIMATED COUNTERS — GOV METRICS BAR
+═══════════════════════════════════════════ */
+(function animateCounters() {
+  function countUp(el, from, to, duration, suffix) {
+    const start = performance.now();
+    function step(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = (from + Math.round((to - from) * ease)).toLocaleString() + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const r = document.getElementById('gm-redactions');
+      const p = document.getElementById('gm-pci');
+      const l = document.getElementById('gm-llm');
+      const a = document.getElementById('gm-audit');
+      if (r) countUp(r, 0, 12847, 1800, '');
+      if (p) countUp(p, 0, 3,     800,  '');
+      if (l) countUp(l, 0, 1284,  1600, '');
+      if (a) countUp(a, 0, 48291, 2000, '');
+    }, 400);
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   5. LIVE GOVERNANCE METRICS SIMULATION
+═══════════════════════════════════════════ */
+(function liveMetrics() {
+  let redactions = 12847, llmCalls = 1284, auditEvts = 48291, pciBlocks = 3;
+  function tick() {
+    redactions += Math.floor(Math.random() * 4);
+    llmCalls    = Math.max(900, llmCalls + Math.floor((Math.random() - 0.48) * 12));
+    auditEvts  += Math.floor(Math.random() * 8 + 2);
+    if (Math.random() < 0.04) pciBlocks++;
+
+    const r = document.getElementById('gm-redactions');
+    const l = document.getElementById('gm-llm');
+    const a = document.getElementById('gm-audit');
+    const p = document.getElementById('gm-pci');
+    if (r) r.textContent = redactions.toLocaleString();
+    if (l) l.textContent = llmCalls.toLocaleString();
+    if (a) a.textContent = auditEvts.toLocaleString();
+    if (p) p.textContent = pciBlocks;
+  }
+  setInterval(tick, 3200);
+})();
+
+/* ═══════════════════════════════════════════
+   6. LIVE AUDIT LOG — APPEND NEW LINES
+═══════════════════════════════════════════ */
+(function liveAuditLog() {
+  const body = document.getElementById('audit-log');
+  if (!body) return;
+  const events = [
+    { lvl:'ok',    msg:'mimir_query_range · query=<code>rate(http_requests_total{job="checkout"}[5m])</code> · tokens=318' },
+    { lvl:'ok',    msg:'faro_vitals · app=<code>grafana-ui</code> · LCP=1.9s INP=54ms CLS=0.02 · tokens=91' },
+    { lvl:'info',  msg:'llm_response · model=gpt-4o-mini · tokens_in=1102 · tokens_out=287 · latency_ms=742' },
+    { lvl:'warn',  msg:'token_budget 80% threshold · team=security-ops · action=alert_sent' },
+    { lvl:'ok',    msg:'tempo_search · traceql=<code>{ .http.status_code=500 }</code> · results=6 · tokens=204' },
+    { lvl:'block', msg:'phi_stream_blocked · stream=<code>sensitivity=phi</code> · user=analyst2@corp · tool=loki_query' },
+    { lvl:'ok',    msg:'grafana_alerts · state=firing · count=5 · noise_suppressed=12 · tokens=188' },
+    { lvl:'info',  msg:'pyroscope_query · profile=cpu · app=<code>payment-svc</code> · top_frames=50 · tokens=412' },
+    { lvl:'ok',    msg:'loki_extract_errors · app=<code>order-svc</code> · pii_redacted=3 fields · patterns=4' },
+    { lvl:'warn',  msg:'circuit_breaker opened · tool=loki_query · consecutive_failures=3 · backoff=60s' },
+    { lvl:'ok',    msg:'circuit_breaker closed · tool=loki_query · recovered · resuming normal operation' },
+  ];
+  let idx = 0;
+  function pad2(n) { return String(n).padStart(2,'0'); }
+  function appendLine() {
+    const e   = events[idx % events.length]; idx++;
+    const now = new Date();
+    const ts  = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}.${String(now.getMilliseconds()).padStart(3,'0')}`;
+    const lvlColors = { ok:'ok', info:'info', warn:'warn', block:'block' };
+    const line = document.createElement('div');
+    line.className = 'audit-line';
+    line.style.opacity = '0'; line.style.transition = 'opacity .5s';
+    line.innerHTML = `<span class="audit-time">${ts}</span><span class="audit-level ${lvlColors[e.lvl]}">${e.lvl.toUpperCase().padEnd(5)}</span><span class="audit-msg">${e.msg}</span>`;
+    body.appendChild(line);
+    setTimeout(() => line.style.opacity = '1', 30);
+    // Keep max 20 lines
+    while (body.children.length > 20) body.removeChild(body.firstChild);
+    body.scrollTop = body.scrollHeight;
+  }
+  setInterval(appendLine, 4500);
+})();
+
+/* ═══════════════════════════════════════════
+   7. FARO VITALS — LIVE SIMULATION
+═══════════════════════════════════════════ */
+(function faroLive() {
+  function rnd(base, range) { return (base + (Math.random() - 0.5) * range).toFixed(base < 1 ? 2 : 0); }
+  setInterval(() => {
+    const lcp = document.getElementById('faro-lcp'); if (lcp) lcp.textContent = rnd(2.1, 0.4) + 's';
+    const inp = document.getElementById('faro-inp'); if (inp) inp.textContent = rnd(68, 20) + 'ms';
+    const cls = document.getElementById('faro-cls'); if (cls) cls.textContent = rnd(0.04, 0.02);
+    const err = document.getElementById('faro-errors'); if (err) err.textContent = Math.max(0, Math.floor(12 + (Math.random()-0.5)*6));
+  }, 5000);
+})();
+
+/* ═══════════════════════════════════════════
+   8. TOKEN BAR ANIMATED WIDTHS
+═══════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  document.querySelectorAll('.token-bar-fill').forEach(bar => {
+    const w = bar.style.width;
+    bar.style.width = '0';
+    setTimeout(() => bar.style.width = w, 600);
+  });
+});
 </script>
 
 </body>
