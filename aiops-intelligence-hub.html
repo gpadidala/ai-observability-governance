@@ -431,16 +431,24 @@ header.scrolled{background:rgba(17,18,23,0.92);backdrop-filter:blur(24px);box-sh
    18. FAQ SECTION
    ============================================================ */
 .faq{background:var(--dark-surface);padding:6rem 0}
-.faq-list{max-width:820px;margin:3rem auto 0;display:flex;flex-direction:column;gap:0.75rem}
+.faq-list{max-width:860px;margin:3rem auto 0;display:flex;flex-direction:column;gap:0}
+/* Category header */
+.faq-category{margin-top:2.5rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:10px}
+.faq-category:first-child{margin-top:0}
+.faq-cat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.faq-cat-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.1px;color:var(--grafana-orange)}
+.faq-cat-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,119,51,.25),transparent)}
+.faq-group{display:flex;flex-direction:column;gap:0.55rem}
 .faq-item{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-md);overflow:hidden;transition:border-color var(--transition-fast)}
 .faq-item.open{border-color:rgba(255,119,51,0.35)}
-.faq-q{padding:1.25rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:600;font-size:0.97rem;color:var(--text-primary);transition:color var(--transition-fast)}
+.faq-q{padding:1.15rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:600;font-size:0.94rem;color:var(--text-primary);transition:color var(--transition-fast)}
 .faq-q:hover{color:var(--grafana-orange)}
 .faq-arrow{font-size:0.85rem;transition:transform var(--transition-base);color:var(--text-muted);flex-shrink:0}
 .faq-item.open .faq-arrow{transform:rotate(180deg);color:var(--grafana-orange)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height var(--transition-slow);padding:0 1.5rem}
-.faq-item.open .faq-a{max-height:300px;padding:0 1.5rem 1.25rem}
-.faq-a p{font-size:0.92rem;color:var(--text-secondary);line-height:1.7;margin:0}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 1.5rem}
+.faq-item.open .faq-a{max-height:420px;padding:0 1.5rem 1.25rem}
+.faq-a p{font-size:0.91rem;color:var(--text-secondary);line-height:1.75;margin:0}
+.faq-a code{background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;font-size:0.87em;color:#e0c97f;font-family:monospace}
 
 /* ============================================================
    19. CTA & FOOTER
@@ -1309,34 +1317,144 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
       <p>Everything engineering and leadership need to know before deploying the platform.</p>
     </div>
     <div class="faq-list" role="list">
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the platform write anything to Grafana, Mimir, Loki, or Kubernetes?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>No. The AIOps Intelligence Hub is strictly read-only. All tools query APIs for data — they never write, modify, scale, restart, or delete resources. The only writes are to the platform's own PostgreSQL database (incidents, investigations, scores) and Grafana annotations, which are cosmetic only.</p></div>
+
+      <!-- ── CATEGORY 1: SECURITY & DATA PRIVACY ── -->
+      <div class="faq-category">
+        <div class="faq-cat-icon" style="background:rgba(255,45,85,.1)">🔒</div>
+        <span class="faq-cat-label">Security &amp; Data Privacy</span>
+        <div class="faq-cat-line"></div>
       </div>
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does any production data leave our infrastructure?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>Only for AI analysis. Alert names, metric values, log snippets, and flame graph summaries are sent to the OpenAI API for embedding and LLM analysis. Full log lines and raw trace data are never sent — only curated, summarized payloads. Configure Azure OpenAI (your own tenant) to keep data within your cloud boundary.</p></div>
+      <div class="faq-group">
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the platform write anything to Grafana, Mimir, Loki, or Kubernetes?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>No. The platform is strictly read-only. All MCP tools query APIs for data — they never write, modify, scale, restart, or delete any resources. The only writes are to the platform's own PostgreSQL database (incidents, investigations, SAAFE scores) and optional cosmetic Grafana annotations (incident markers on dashboards).</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does any production data leave our infrastructure?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Only summarized, curated payloads are sent to the LLM. Alert names, metric values, log pattern summaries, and flame graph top-function lists are sent for AI analysis. Full raw log lines and complete trace payloads are never sent. Use Azure OpenAI (your own tenant) or a self-hosted model to keep all data within your cloud boundary — the LLM backend is swappable via <code>OPENAI_BASE_URL</code>.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How is PII / PCI / PHI data handled before LLM analysis?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>The MCP ingestion layer runs every log snippet and annotation through a configurable redaction pipeline before any data reaches the LLM context. PCI patterns (card numbers, CVV heuristics), PHI stream labels (<code>sensitivity=phi</code>), and PII fields (emails, IPs, SSN patterns) are either blocked or replaced with <code>[REDACTED]</code> tokens. The pipeline is defined in the MCP Server YAML config and is mandatory — it cannot be disabled.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What authentication and authorization model does the platform use?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>The FastAPI backend enforces JWT-based authentication on all endpoints. Role-based access control (RBAC) maps users to one of five roles: <code>admin</code>, <code>editor</code>, <code>viewer</code>, <code>ai-agent</code>, and <code>read-only</code>. Service accounts used by the AI agents have the narrowest possible scope — read-only access to specific datasources only. All API keys are stored as Kubernetes secrets or environment variables — never in source code.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Are all AI agent actions logged for audit purposes?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Yes. Every MCP tool call (query sent, parameters, duration, token count, user/agent identity) is written to a Loki audit stream tagged <code>{app="mcp-server", env="prod"}</code>. These logs are immutable, queryable via LogQL, and retained according to your Loki retention policy. The audit stream cannot be disabled — it is a core platform invariant.</p></div>
+        </div>
       </div>
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How long does a full RCA investigation take?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>Typically 45–90 seconds for a full investigation across all signal sources (metrics, logs, traces, profiles, and frontend). The planner agent queries all signals in parallel, and the synthesizer generates the RCA narrative once all findings are available. Results stream in real time via WebSocket so you see partial findings within 10 seconds.</p></div>
+
+      <!-- ── CATEGORY 2: AI & INTELLIGENCE ── -->
+      <div class="faq-category">
+        <div class="faq-cat-icon" style="background:rgba(139,92,246,.1)">🧠</div>
+        <span class="faq-cat-label">AI &amp; Intelligence</span>
+        <div class="faq-cat-line"></div>
       </div>
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What is the minimum infrastructure needed to run this?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>The backend requires 2 vCPUs / 4 GB RAM minimum (4 vCPUs / 8 GB recommended for production). You need an existing Grafana stack (Mimir, Loki, and Tempo at minimum), a PostgreSQL 16 instance, and a Redis 7 instance. ChromaDB is optional — required only for the RAPTOR knowledge base feature.</p></div>
+      <div class="faq-group">
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How long does a full RCA investigation take?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Typically 45–90 seconds for a complete investigation across all signal sources (metrics, logs, traces, profiles, frontend). The Planner Agent dispatches specialist agents in parallel — you see partial findings stream in via WebSocket within 10–15 seconds of triggering. The Synthesizer writes the final RCA narrative once all agents report back. Simple single-signal queries (e.g. "what's the error rate for checkout?") complete in under 5 seconds.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How accurate is the RCA? Can the AI be wrong?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>The Synthesizer always includes a <strong>confidence score (0–100)</strong> and labels each piece of evidence as High / Medium / Low confidence. It is designed to say "insufficient data" rather than hallucinate a root cause. The system never guesses — it only states what the observed data shows. We recommend treating all RCA outputs as a strong starting hypothesis that an engineer confirms, not an autonomous decision.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How is the SAAFE score calculated?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>SAAFE is a weighted composite of five normalized sub-scores (0–100 each): <strong>S</strong>ecurity (CVE exposure + TLS certificate age), <strong>A</strong>vailability (error rate + SLO burn rate), <strong>A</strong>nomaly (rolling Z-score magnitude across RED metrics), <strong>F</strong>ailure (pod restarts + OOMKilled events), and <strong>E</strong>vents (deployment risk in the last 2h). Weights are configurable per team in <code>saafe_weights.yaml</code>. The score refreshes every 5 minutes via a Celery background task.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Can I use a different LLM provider instead of OpenAI?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Yes. The LLM backend is abstracted via LangChain's <code>BaseChatModel</code> interface. Set <code>OPENAI_BASE_URL</code> to point to any OpenAI-compatible endpoint: Azure OpenAI, Ollama (local LLaMA3, Mistral), Groq, Anthropic Claude via a proxy, or Amazon Bedrock. The planner and synthesizer agents use <code>gpt-4o</code> class models by default; fast sub-tasks use <code>gpt-4o-mini</code> class models. Both tiers are configurable independently.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How does the RAPTOR Knowledge Base improve over time?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Every resolved investigation is automatically ingested into the RAPTOR knowledge base as an institutional memory entry, tagged with the affected services, severity, and extracted RCA pattern. The next time a similar incident occurs, the Planner Agent retrieves the most relevant past RCAs as context before generating its investigation plan. This creates a self-learning feedback loop — the platform gets smarter with every incident it resolves.</p></div>
+        </div>
       </div>
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Can the Alert Clustering engine handle bursty alert storms?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>Yes. The clustering engine uses Redis Streams as a buffer, absorbing bursts of thousands of alerts without dropping events. The streaming HDBSCAN implementation processes alerts in micro-batches with a configurable flush interval (default 500ms). In load tests, the engine sustained 10,000 alerts/minute while maintaining &lt;1s clustering latency.</p></div>
+
+      <!-- ── CATEGORY 3: ALERT INTELLIGENCE ── -->
+      <div class="faq-category">
+        <div class="faq-cat-icon" style="background:rgba(255,119,51,.1)">🔔</div>
+        <span class="faq-cat-label">Alert Intelligence &amp; Correlation</span>
+        <div class="faq-cat-line"></div>
       </div>
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How is the SAAFE score calculated?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>The SAAFE composite score is a weighted sum of five normalized sub-scores (0–100 each): Security (CVE exposure + TLS age), Availability (error rate + SLO compliance), Anomaly (Z-score magnitude across key metrics), Failure (pod restarts + OOMKilled count), and Events (recent deployment risk). Weights are configurable per team. The composite score updates every 5 minutes.</p></div>
+      <div class="faq-group">
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Can the Alert Clustering engine handle bursty alert storms?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Yes. Incoming alerts are buffered in Redis Streams before clustering, absorbing sudden bursts of thousands of alerts without event loss. The streaming HDBSCAN implementation processes alerts in micro-batches with a configurable flush interval (default <code>500ms</code>). In load tests the engine sustained <strong>10,000 alerts/minute</strong> while maintaining sub-1-second clustering latency and less than 200MB memory usage.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How does the 3-layer correlation engine work?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Layer 1 (Temporal): alerts firing within a configurable time window (default 5 minutes) are grouped together. Layer 2 (Topological): groups whose services have a dependency relationship in the service graph are merged — a DB slowdown alert and a checkout error alert become one incident. Layer 3 (Semantic): remaining groups with semantically similar alert text (cosine similarity &gt; 0.75 on OpenAI embeddings) are merged. The three layers together typically reduce alert noise by 85–95%.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What happens when an alert is suppressed by the correlation engine?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Suppressed alerts are not deleted — they are linked to their parent alert group and stored in PostgreSQL with a <code>status=suppressed</code> flag. The UI shows a "12 suppressed" badge on the parent alert cluster, and engineers can expand the group to see all contributing alerts. Suppressed alerts still appear in the audit log and can be re-evaluated if the parent group is dismissed.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How is the P1 / P2 severity automatically determined?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>The platform combines three signals to auto-classify severity: (1) the Alertmanager <code>severity</code> label on incoming alerts, (2) the SAAFE score of affected services (SAAFE &lt; 40 forces P1), and (3) a correlation group size heuristic — groups with 5+ correlated firing alerts are escalated to at least P2. The final severity is the maximum of these three signals. Teams can override via the UI or API at any time.</p></div>
+        </div>
       </div>
-      <div class="faq-item" role="listitem">
-        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the platform support multiple Kubernetes clusters?<span class="faq-arrow">▼</span></div>
-        <div class="faq-a"><p>Yes. The platform is multi-cluster aware through Mimir's and Loki's tenant/cluster label selectors. Each cluster is identified by a <code>cluster</code> label, and all queries, SAAFE scores, and SLO dashboards can be filtered or aggregated by cluster. The service topology graph supports cross-cluster service edges via Tempo distributed tracing data.</p></div>
+
+      <!-- ── CATEGORY 4: INTEGRATION & DEPLOYMENT ── -->
+      <div class="faq-category">
+        <div class="faq-cat-icon" style="background:rgba(0,212,255,.1)">🔌</div>
+        <span class="faq-cat-label">Integration &amp; Deployment</span>
+        <div class="faq-cat-line"></div>
       </div>
+      <div class="faq-group">
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What is the minimum infrastructure needed to run this?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>The backend requires 2 vCPUs / 4 GB RAM minimum (4 vCPUs / 8 GB recommended). You need an existing Grafana stack with at minimum Mimir and Loki. Tempo is strongly recommended for trace correlation. PostgreSQL 16 and Redis 7 are required. ChromaDB is optional — only needed for the RAPTOR knowledge base. The entire stack can be stood up locally with <code>make up</code> via Docker Compose in under 3 minutes.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the platform support multiple Kubernetes clusters?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Yes. Multi-cluster support is native via Mimir and Loki's tenant/cluster label selectors. Each cluster is identified by a <code>cluster</code> label in metric and log streams. SAAFE scores, SLO dashboards, and alert correlation all support filtering and aggregation by cluster. The service topology graph supports cross-cluster service edges using Tempo distributed tracing span data.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How do I connect the platform to an existing Alertmanager?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Add a webhook receiver to your Alertmanager config pointing to <code>https://&lt;your-platform&gt;/api/v1/alerts/webhook/alertmanager</code>. The endpoint accepts the standard Alertmanager v2 webhook payload. It acknowledges in under 200ms and processes alerts asynchronously in the background. No changes to your existing alert routing rules are needed — the platform is additive.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the Faro RUM integration require changes to our frontend apps?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Yes, a small one-time SDK integration. Add the Grafana Faro Web SDK to your frontend app (~5KB gzipped), configure the collector endpoint, and add the <code>beforeSend</code> hook for PII stripping (a 10-line snippet). After that, Web Vitals (LCP, INP, CLS, TTFB), JavaScript errors, and user session counts flow automatically into the platform without any further changes.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Can I run this without Pyroscope?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Yes. All signal sources are independently optional. If Pyroscope is not configured, the Profiles Agent gracefully skips and the RCA report notes "profiling data unavailable." The platform degrades gracefully for any missing signal source — the Planner Agent only dispatches agents for signals that are configured and healthy according to the <code>/health</code> endpoint.</p></div>
+        </div>
+      </div>
+
+      <!-- ── CATEGORY 5: OPERATIONS & COST ── -->
+      <div class="faq-category">
+        <div class="faq-cat-icon" style="background:rgba(0,255,136,.08)">⚙️</div>
+        <span class="faq-cat-label">Operations &amp; Cost</span>
+        <div class="faq-cat-line"></div>
+      </div>
+      <div class="faq-group">
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What is the typical OpenAI API cost per investigation?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>A full 6-agent investigation (all signals) typically consumes 3,000–6,000 input tokens and 500–800 output tokens using GPT-4o. At current pricing this is approximately <strong>$0.05–$0.12 per investigation</strong>. Fast sub-tasks (log summarization, label lookup) use GPT-4o-mini at ~10× lower cost. For a team handling 50 P1/P2 incidents per month the monthly AI cost is typically under $20. Token budgets per team are enforced via the governance layer.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How do I add runbooks and post-mortems to the Knowledge Base?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>Use the <code>/api/v1/knowledge/ingest</code> endpoint or the KB Upload UI in the Knowledge page. Supported formats: Markdown, PDF, plain text, and Confluence REST API links. The RAPTOR pipeline automatically chunks, embeds, clusters, and builds the hierarchical summary tree. Ingestion of a 20-page runbook takes approximately 30–45 seconds. Resolved incidents are auto-ingested without any manual step.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How do I configure SLO targets for each service?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>SLO targets are defined per service in the Service Registry — either via the Settings UI or the <code>/api/v1/services</code> API. Each service record holds a <code>slo_target</code> (e.g. <code>99.9</code>) and an optional <code>error_budget_policy</code>. The Metrics Agent automatically computes the 1h and 5m burn rates against the configured target during every investigation. No PromQL rule changes are needed — all SLO math happens inside the agent.</p></div>
+        </div>
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What monitoring exists for the platform itself?<span class="faq-arrow">▼</span></div>
+          <div class="faq-a"><p>The platform is fully self-instrumented. The FastAPI backend exposes Prometheus metrics at <code>/metrics</code> (prefixed <code>novasre_</code>) covering: investigation duration, tool call latency per signal source, alert correlation throughput, WebSocket connection count, and LLM token usage. These metrics can be scraped by your existing Mimir instance and displayed on the included self-monitoring Grafana dashboard. Structured logs stream to Loki and traces are sent to Tempo via OpenTelemetry.</p></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1617,12 +1735,19 @@ const counterObs = new IntersectionObserver((entries) => {
 }, { threshold: 0.5 });
 document.querySelectorAll('[data-count]').forEach(el => counterObs.observe(el));
 
-/* ── FAQ accordion ── */
+/* ── FAQ accordion (category-aware: only one item open per category group) ── */
 document.querySelectorAll('.faq-q').forEach(btn => {
   btn.addEventListener('click', () => {
-    const item = btn.closest('.faq-item');
+    const item  = btn.closest('.faq-item');
+    const group = item.closest('.faq-group');
     const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item.open').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-q').setAttribute('aria-expanded','false'); });
+    // close all in the same category group
+    if (group) {
+      group.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-q').setAttribute('aria-expanded','false');
+      });
+    }
     if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
   });
   btn.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); btn.click(); } });
