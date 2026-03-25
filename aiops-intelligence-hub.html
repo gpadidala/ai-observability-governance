@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIOps Intelligence Hub — Enterprise Observability Platform</title>
+<meta name="description" content="Six AI-powered capabilities transforming reliability, performance, and incident response across cloud-native infrastructure.">
+<meta name="keywords" content="AIOps, SLO, Alert Clustering, Flamegraph AI, Forecasting, RCA, Service Insights, Observability, Grafana, Kubernetes, OpenAI">
+<meta name="author" content="Enterprise Observability Team">
+<meta property="og:title" content="AIOps Intelligence Hub">
+<meta property="og:description" content="AI-powered observability for the modern enterprise">
+<meta property="og:type" content="website">
+<style>
+/* ============================================================
+   1. RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;background:var(--dark-bg);color:var(--text-primary);line-height:1.7;overflow-x:hidden;cursor:none}
+/* noise texture overlay */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");opacity:0.4;pointer-events:none;z-index:9998}
+img,svg{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+ul,ol{list-style:none}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+
+/* ============================================================
+   2. DESIGN TOKENS
+   ============================================================ */
+:root{
+  /* ── Core palette ── */
+  --orange:#FF6B35;
+  --orange-dark:#e0521a;
+  --orange-glow:rgba(255,107,53,0.4);
+  --cyan:#00D4FF;
+  --cyan-glow:rgba(0,212,255,0.3);
+  --purple:#8B5CF6;
+  --purple-glow:rgba(139,92,246,0.3);
+  --neon-green:#00FF88;
+  --grafana-orange:#FF6B35;
+  --grafana-orange-dark:#e0521a;
+  --grafana-red:#FF2D55;
+  --grafana-green:#00FF88;
+  --grafana-yellow:#FFD60A;
+  /* ── Backgrounds ── */
+  --dark-bg:#07080f;
+  --dark-surface:#0c0e1a;
+  --dark-elevated:#131629;
+  --dark-card:#0f1120;
+  /* ── Glass ── */
+  --glass-bg:rgba(15,17,32,0.8);
+  --glass-border:rgba(255,255,255,0.07);
+  --glass-border-hover:rgba(255,107,53,0.5);
+  --glass-highlight:rgba(255,255,255,0.03);
+  /* ── Text ── */
+  --text-primary:#F0F2FF;
+  --text-secondary:#8892B0;
+  --text-muted:#4A5270;
+  /* ── Semantic ── */
+  --success:#00FF88;
+  --warning:#FFD60A;
+  --danger:#FF2D55;
+  --info:#00D4FF;
+  /* ── Shadows ── */
+  --shadow-sm:0 2px 16px rgba(0,0,0,0.6);
+  --shadow-md:0 8px 32px rgba(0,0,0,0.7);
+  --shadow-lg:0 20px 60px rgba(0,0,0,0.8);
+  --glow-orange:0 0 30px rgba(255,107,53,0.4),0 0 60px rgba(255,107,53,0.15);
+  --glow-cyan:0 0 30px rgba(0,212,255,0.3);
+  --glow-purple:0 0 30px rgba(139,92,246,0.3);
+  /* ── Spacing ── */
+  --spacing-xs:0.5rem;
+  --spacing-sm:1rem;
+  --spacing-md:1.5rem;
+  --spacing-lg:2rem;
+  --spacing-xl:3rem;
+  /* ── Radii ── */
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:18px;
+  --radius-xl:24px;
+  /* ── Transitions ── */
+  --transition-fast:0.18s cubic-bezier(0.4,0,0.2,1);
+  --transition-base:0.3s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow:0.5s cubic-bezier(0.4,0,0.2,1);
+  --transition-spring:0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ============================================================
+   3. TYPOGRAPHY
+   ============================================================ */
+h1{font-size:clamp(2.6rem,6vw,4.5rem);font-weight:900;line-height:1.05;letter-spacing:-0.03em}
+h2{font-size:clamp(2rem,3.5vw,3.2rem);font-weight:800;line-height:1.15;letter-spacing:-0.02em}
+h3{font-size:1.35rem;font-weight:700;line-height:1.4;letter-spacing:-0.01em}
+h4{font-size:1.1rem;font-weight:600;letter-spacing:-0.005em}
+p{color:var(--text-secondary);line-height:1.8}
+.text-gradient{background:linear-gradient(135deg,#fff 0%,var(--orange) 35%,var(--cyan) 70%,#fff 100%);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradientShift 6s ease infinite}
+.text-orange{color:var(--orange)}
+.text-cyan{color:var(--cyan)}
+.text-muted{color:var(--text-muted)}
+.text-orange{color:var(--grafana-orange)}
+.text-muted{color:var(--text-muted)}
+.text-secondary{color:var(--text-secondary)}
+
+/* ============================================================
+   4. LAYOUT & GRID
+   ============================================================ */
+.container{max-width:1280px;margin:0 auto;padding:0 var(--spacing-lg)}
+.section{padding:var(--spacing-xl) 0}
+.section-inner{padding:5rem 0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-lg);align-items:center}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--spacing-md)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--spacing-md)}
+.grid-6{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--spacing-md)}
+.flex{display:flex}
+.flex-center{display:flex;align-items:center;justify-content:center}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.gap-sm{gap:var(--spacing-sm)}
+.gap-md{gap:var(--spacing-md)}
+.text-center{text-align:center}
+
+/* ============================================================
+   5. GLASS CARD
+   ============================================================ */
+.glass-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-lg);backdrop-filter:blur(24px);box-shadow:var(--shadow-md);transition:all var(--transition-base)}
+.glass-card:hover{border-color:rgba(255,107,53,0.4);box-shadow:var(--shadow-lg),var(--glow-orange);transform:translateY(-5px)}
+.card-pad{padding:var(--spacing-lg)}
+.card-pad-sm{padding:var(--spacing-md)}
+
+/* ============================================================
+   6. BADGES & LABELS
+   ============================================================ */
+.badge{padding:0.3rem 0.8rem;border-radius:20px;font-size:0.78rem;font-weight:700;display:inline-block}
+.badge-success{background:rgba(82,196,26,0.15);color:var(--success);border:1px solid rgba(82,196,26,0.3)}
+.badge-warning{background:rgba(250,173,20,0.15);color:var(--warning);border:1px solid rgba(250,173,20,0.3)}
+.badge-info{background:rgba(24,144,255,0.15);color:var(--info);border:1px solid rgba(24,144,255,0.3)}
+.badge-orange{background:rgba(255,119,51,0.15);color:var(--grafana-orange);border:1px solid rgba(255,119,51,0.3)}
+.badge-red{background:rgba(224,47,68,0.15);color:var(--grafana-red);border:1px solid rgba(224,47,68,0.3)}
+.badge-green{background:rgba(115,191,105,0.15);color:var(--grafana-green);border:1px solid rgba(115,191,105,0.3)}
+.section-label{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.25);border-radius:20px;padding:0.4rem 1.1rem;color:var(--orange);font-size:0.78rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.2rem;box-shadow:0 0 16px rgba(255,107,53,0.1)}
+
+/* ============================================================
+   CUSTOM CURSOR
+   ============================================================ */
+#cursor-dot{position:fixed;width:8px;height:8px;background:var(--orange);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width 0.2s,height 0.2s,background 0.2s;box-shadow:0 0 12px var(--orange),0 0 24px rgba(255,107,53,0.5)}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid rgba(255,107,53,0.5);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:width 0.35s cubic-bezier(0.25,0.46,0.45,0.94),height 0.35s cubic-bezier(0.25,0.46,0.45,0.94),border-color 0.3s,left 0.08s linear,top 0.08s linear}
+body:has(a:hover,button:hover) #cursor-dot{width:12px;height:12px;background:var(--cyan);box-shadow:0 0 20px var(--cyan)}
+body:has(a:hover,button:hover) #cursor-ring{width:52px;height:52px;border-color:rgba(0,212,255,0.6)}
+@media(hover:none){#cursor-dot,#cursor-ring{display:none}body{cursor:auto}}
+
+/* ============================================================
+   COMMAND PALETTE
+   ============================================================ */
+#cmd-overlay{position:fixed;inset:0;background:rgba(7,8,15,0.85);backdrop-filter:blur(12px);z-index:9990;opacity:0;pointer-events:none;transition:opacity var(--transition-base);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh}
+#cmd-overlay.open{opacity:1;pointer-events:all}
+#cmd-palette{background:var(--dark-surface);border:1px solid rgba(255,107,53,0.25);border-radius:var(--radius-xl);width:min(620px,90vw);box-shadow:0 32px 80px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.04),var(--glow-orange);transform:translateY(-20px) scale(0.97);transition:transform var(--transition-spring);overflow:hidden}
+#cmd-overlay.open #cmd-palette{transform:translateY(0) scale(1)}
+#cmd-search-wrap{display:flex;align-items:center;gap:0.75rem;padding:1.1rem 1.25rem;border-bottom:1px solid var(--glass-border)}
+#cmd-search-icon{font-size:1.1rem;color:var(--text-muted);flex-shrink:0}
+#cmd-search-input{flex:1;background:none;border:none;outline:none;font-size:1.05rem;color:var(--text-primary);font-family:inherit}
+#cmd-search-input::placeholder{color:var(--text-muted)}
+#cmd-kbd{background:var(--dark-elevated);border:1px solid var(--glass-border);border-radius:6px;padding:0.2rem 0.5rem;font-size:0.72rem;color:var(--text-muted);font-family:monospace;flex-shrink:0}
+#cmd-results{max-height:360px;overflow-y:auto;padding:0.5rem}
+#cmd-results:empty::after{content:'No modules found';display:block;text-align:center;padding:2rem;color:var(--text-muted);font-size:0.9rem}
+.cmd-item{display:flex;align-items:center;gap:0.9rem;padding:0.7rem 0.85rem;border-radius:var(--radius-md);cursor:pointer;transition:background var(--transition-fast);text-decoration:none;color:var(--text-primary)}
+.cmd-item:hover,.cmd-item.focused{background:rgba(255,107,53,0.1)}
+.cmd-item-icon{width:34px;height:34px;background:rgba(255,107,53,0.12);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.cmd-item-text strong{display:block;font-size:0.9rem;font-weight:600}
+.cmd-item-text span{font-size:0.78rem;color:var(--text-muted)}
+.cmd-footer{border-top:1px solid var(--glass-border);padding:0.6rem 1.25rem;display:flex;gap:1.5rem;font-size:0.72rem;color:var(--text-muted)}
+.cmd-footer kbd{background:var(--dark-elevated);border:1px solid var(--glass-border);border-radius:4px;padding:0.1rem 0.4rem;font-family:monospace;margin-right:0.3rem}
+
+/* ============================================================
+   7. BUTTONS
+   ============================================================ */
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.8rem 1.9rem;border-radius:var(--radius-md);font-size:0.95rem;font-weight:700;transition:all var(--transition-spring);cursor:none;position:relative;overflow:hidden;letter-spacing:0.01em}
+.btn::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,0.15),transparent 70%);opacity:0;transition:opacity var(--transition-fast)}
+.btn:hover::after{opacity:1}
+.btn-primary{background:linear-gradient(135deg,var(--orange) 0%,var(--orange-dark) 100%);color:#fff;box-shadow:0 4px 20px rgba(255,107,53,0.4),0 0 0 1px rgba(255,107,53,0.2)}
+.btn-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 35px rgba(255,107,53,0.55),0 0 0 1px rgba(255,107,53,0.3)}
+.btn-secondary{background:rgba(255,255,255,0.04);color:var(--text-primary);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px)}
+.btn-secondary:hover{border-color:rgba(255,107,53,0.5);color:var(--orange);transform:translateY(-3px) scale(1.02);box-shadow:var(--glow-orange)}
+.btn-ghost{color:var(--orange);border:1px solid rgba(255,107,53,0.3);padding:0.5rem 1.2rem;border-radius:var(--radius-sm);font-size:0.85rem;font-weight:600;transition:all var(--transition-fast)}
+.btn-ghost:hover{background:rgba(255,107,53,0.08);border-color:rgba(255,107,53,0.6);box-shadow:0 0 16px rgba(255,107,53,0.2)}
+
+/* ============================================================
+   8. READING PROGRESS BAR
+   ============================================================ */
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--grafana-orange),var(--albertsons-blue-light));width:0%;z-index:9999;transition:width 0.1s linear}
+
+/* ============================================================
+   9. HEADER & NAV
+   ============================================================ */
+header{position:fixed;top:3px;left:0;right:0;z-index:1000;padding:0.85rem 0;transition:all var(--transition-base)}
+header.scrolled{background:rgba(17,18,23,0.92);backdrop-filter:blur(24px);box-shadow:0 2px 20px rgba(0,0,0,0.5);border-bottom:1px solid var(--glass-border)}
+.nav-container{max-width:1280px;margin:0 auto;padding:0 var(--spacing-lg);display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.nav-logo{display:flex;align-items:center;gap:0.75rem;flex-shrink:0}
+.nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--grafana-orange),var(--grafana-orange-dark));border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.nav-logo-text{font-weight:800;font-size:1rem;color:var(--text-primary)}
+.nav-logo-sub{font-size:0.7rem;color:var(--text-muted);font-weight:400;display:block;line-height:1}
+.nav-links{display:flex;align-items:center;gap:0.25rem}
+.nav-links a{padding:0.4rem 0.75rem;border-radius:var(--radius-sm);font-size:0.85rem;font-weight:500;color:var(--text-secondary);transition:all var(--transition-fast);position:relative;white-space:nowrap}
+.nav-links a:hover,.nav-links a.active{color:var(--text-primary)}
+.nav-links a.active::after{content:'';position:absolute;bottom:-2px;left:0.75rem;right:0.75rem;height:2px;background:var(--grafana-orange);border-radius:2px}
+.nav-links a:hover{background:var(--glass-highlight)}
+.nav-right{display:flex;align-items:center;gap:0.75rem;flex-shrink:0}
+.search-input{background:var(--dark-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:0.4rem 0.75rem;color:var(--text-primary);font-size:0.85rem;width:180px;transition:all var(--transition-fast);font-family:inherit}
+.search-input:focus{outline:none;border-color:var(--grafana-orange);box-shadow:0 0 0 3px rgba(255,119,51,0.15);width:220px}
+.search-input::placeholder{color:var(--text-muted)}
+.hamburger{display:none;flex-direction:column;gap:5px;padding:0.5rem;cursor:pointer}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text-primary);border-radius:2px;transition:all var(--transition-base)}
+.nav-drawer{position:fixed;top:0;right:-100%;width:280px;height:100vh;background:var(--dark-surface);border-left:1px solid var(--glass-border);z-index:2000;padding:2rem 1.5rem;transition:right var(--transition-slow);overflow-y:auto}
+.nav-drawer.open{right:0}
+.nav-drawer-links a{display:block;padding:0.75rem 0;border-bottom:1px solid var(--glass-border);color:var(--text-secondary);font-weight:500;transition:color var(--transition-fast)}
+.nav-drawer-links a:hover{color:var(--grafana-orange)}
+.nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1999;opacity:0;pointer-events:none;transition:opacity var(--transition-base)}
+.nav-overlay.open{opacity:1;pointer-events:all}
+.nav-close{position:absolute;top:1rem;right:1rem;font-size:1.4rem;color:var(--text-muted);cursor:pointer;padding:0.25rem}
+
+/* ============================================================
+   10. HERO SECTION
+   ============================================================ */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;padding:8rem 0 4rem}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:0.7}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-blob{position:absolute;border-radius:50%;filter:blur(100px);animation:gentleGlow 6s ease-in-out infinite alternate}
+.hero-blob-1{width:700px;height:700px;background:radial-gradient(circle,rgba(255,107,53,0.18) 0%,transparent 70%);top:-15%;left:-10%}
+.hero-blob-2{width:600px;height:600px;background:radial-gradient(circle,rgba(0,212,255,0.12) 0%,transparent 70%);top:15%;right:-8%;animation-delay:2s}
+.hero-blob-3{width:500px;height:500px;background:radial-gradient(circle,rgba(139,92,246,0.15) 0%,transparent 70%);bottom:-10%;left:25%;animation-delay:4s}
+.hero-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.hero-particles span{position:absolute;width:2px;height:2px;background:rgba(255,107,53,0.8);border-radius:50%;animation:float var(--dur,8s) ease-in-out infinite;box-shadow:0 0 6px rgba(255,107,53,0.6)}
+.hero-content{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 var(--spacing-lg);text-align:center}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:0.6rem;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.25);border-radius:100px;padding:0.5rem 1.3rem;color:var(--orange);font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.5rem;box-shadow:0 0 20px rgba(255,107,53,0.1)}
+.hero-eyebrow-dot{width:7px;height:7px;background:var(--neon-green);border-radius:50%;box-shadow:0 0 8px var(--neon-green);animation:blink 2s ease infinite}
+.hero h1{margin-bottom:1.5rem}
+#typewriter-cursor{display:inline-block;width:3px;height:0.9em;background:var(--orange);margin-left:2px;vertical-align:middle;animation:blink 1s step-end infinite}
+.hero-sub{font-size:1.18rem;color:var(--text-secondary);max-width:700px;margin:0 auto 2.5rem;line-height:1.85}
+.hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+/* live status bar */
+.hero-status{display:inline-flex;align-items:center;gap:1.5rem;background:rgba(15,17,32,0.7);border:1px solid var(--glass-border);border-radius:100px;padding:0.5rem 1.25rem;margin:0 auto 2.5rem;font-size:0.78rem;font-weight:600;letter-spacing:0.04em;backdrop-filter:blur(10px)}
+.status-item{display:flex;align-items:center;gap:0.4rem;color:var(--text-muted)}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-dot.green{background:var(--neon-green);box-shadow:0 0 8px var(--neon-green);animation:blink 3s ease infinite}
+.status-dot.orange{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+.status-sep{color:var(--glass-border)}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;max-width:820px;margin:0 auto 3rem}
+.stat-card{background:rgba(15,17,32,0.6);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.5rem 1rem;text-align:center;backdrop-filter:blur(16px);position:relative;overflow:hidden;transition:border-color var(--transition-base),box-shadow var(--transition-base)}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,107,53,0.05),transparent);opacity:0;transition:opacity var(--transition-base)}
+.stat-card:hover{border-color:rgba(255,107,53,0.3);box-shadow:var(--glow-orange)}.stat-card:hover::before{opacity:1}
+.stat-number{font-size:2.4rem;font-weight:900;color:var(--orange);line-height:1;display:block;letter-spacing:-0.03em}
+.stat-label{font-size:0.73rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-top:0.5rem}
+.hero-ticker{position:relative;overflow:hidden;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.04) 20%,rgba(255,107,53,0.04) 80%,transparent);border-top:1px solid rgba(255,107,53,0.1);border-bottom:1px solid rgba(255,107,53,0.1);padding:0.65rem 0;margin-top:1rem}
+.ticker-track{display:flex;gap:3rem;white-space:nowrap;animation:ticker 30s linear infinite}
+.ticker-track span{font-size:0.75rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--orange);opacity:0.7}
+.ticker-dot{color:var(--cyan);opacity:0.5}
+
+/* ============================================================
+   11. SKIP LINK & ACCESSIBILITY
+   ============================================================ */
+.skip-link{position:absolute;top:-40px;left:1rem;background:var(--grafana-orange);color:#fff;padding:0.5rem 1rem;border-radius:0 0 var(--radius-sm) var(--radius-sm);font-weight:700;z-index:9999;transition:top var(--transition-fast)}
+.skip-link:focus{top:0}
+*:focus-visible{outline:2px solid var(--grafana-orange);outline-offset:3px;border-radius:4px}
+
+/* ============================================================
+   12. OVERVIEW SECTION
+   ============================================================ */
+.overview{background:var(--dark-surface);padding:6rem 0}
+.section-header{text-align:center;margin-bottom:3.5rem}
+.section-header p{font-size:1.05rem;max-width:600px;margin:0.75rem auto 0}
+.module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.module-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.85rem;cursor:none;transition:box-shadow var(--transition-base),border-color var(--transition-base);position:relative;overflow:hidden;transform-style:preserve-3d;will-change:transform}
+/* animated gradient border via pseudo overlay */
+.module-card::after{content:'';position:absolute;inset:-1px;border-radius:var(--radius-lg);background:conic-gradient(from var(--a,0deg),var(--orange),var(--cyan),var(--purple),var(--orange));opacity:0;transition:opacity var(--transition-base);z-index:-1}
+.module-card:hover::after{opacity:1;animation:borderSpin 3s linear infinite}
+.module-card::before{content:'';position:absolute;inset:1px;background:var(--dark-card);border-radius:calc(var(--radius-lg) - 1px);z-index:0}
+.module-card>*{position:relative;z-index:1}
+.module-card:hover{box-shadow:var(--shadow-lg),var(--glow-orange);border-color:transparent}
+/* spotlight effect on hover */
+.module-card .spotlight{position:absolute;width:250px;height:250px;background:radial-gradient(circle,rgba(255,107,53,0.08),transparent 70%);pointer-events:none;transform:translate(-50%,-50%);z-index:0;opacity:0;transition:opacity 0.3s}
+.module-card:hover .spotlight{opacity:1}
+.module-icon{width:56px;height:56px;background:linear-gradient(135deg,rgba(255,107,53,0.15),rgba(255,107,53,0.04));border:1px solid rgba(255,107,53,0.25);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:1.1rem;box-shadow:0 0 20px rgba(255,107,53,0.15);transition:all var(--transition-spring)}
+.module-card:hover .module-icon{transform:scale(1.1) rotate(-3deg);box-shadow:var(--glow-orange)}
+.module-card h3{margin-bottom:0.35rem;font-size:1.1rem}
+.module-card p{font-size:0.88rem;line-height:1.6;margin-top:0.5rem;margin-bottom:1rem}
+.module-link{font-size:0.82rem;font-weight:700;color:var(--grafana-orange);display:inline-flex;align-items:center;gap:0.3rem;transition:gap var(--transition-fast)}
+.module-card:hover .module-link{gap:0.6rem}
+
+/* ============================================================
+   13. MODULE DEEP-DIVE SECTIONS
+   ============================================================ */
+.module-section{padding:6rem 0;position:relative;overflow:hidden}
+.module-section:nth-child(even){background:var(--dark-surface)}
+.module-section::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(100px);opacity:0.12;pointer-events:none;z-index:0}
+#alert-clustering::before{background:radial-gradient(circle,#FF7733,transparent);top:-20%;right:-10%}
+#flamegraph-ai::before{background:radial-gradient(circle,#E02F44,transparent);top:-20%;left:-10%}
+#forecasting::before{background:radial-gradient(circle,#73BF69,transparent);bottom:-20%;right:-10%}
+#rca-hub::before{background:radial-gradient(circle,#1890FF,transparent);top:-20%;left:-10%}
+#service-insights::before{background:radial-gradient(circle,#FADE2A,transparent);bottom:-20%;right:-10%}
+#slo-framework::before{background:radial-gradient(circle,#C084FC,transparent);top:-20%;left:-10%}
+.module-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;position:relative;z-index:1}
+.module-grid-2.reverse{direction:rtl}
+.module-grid-2.reverse>*{direction:ltr}
+.module-number{font-size:0.75rem;font-weight:700;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.5rem}
+.module-section h2{margin-bottom:1rem}
+.module-story p{margin-bottom:1rem;font-size:1rem}
+.benefits-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:2rem}
+.benefit-item{display:flex;gap:0.75rem;align-items:flex-start}
+.benefit-icon{font-size:1.2rem;flex-shrink:0;margin-top:0.1rem}
+.benefit-item h4{font-size:0.95rem;margin-bottom:0.2rem;color:var(--text-primary)}
+.benefit-item p{font-size:0.82rem;margin:0}
+.how-it-works{margin-top:2.5rem}
+.how-it-works h4{font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1.25rem}
+.steps{display:flex;flex-direction:column;gap:0.75rem}
+.step{display:flex;gap:1rem;align-items:flex-start}
+.step-num{width:28px;height:28px;background:linear-gradient(135deg,var(--grafana-orange),var(--grafana-orange-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:800;color:#fff;flex-shrink:0;margin-top:0.1rem}
+.step-content{flex:1}
+.step-content strong{color:var(--text-primary);font-size:0.92rem}
+.step-content span{display:block;font-size:0.82rem;color:var(--text-muted);margin-top:0.15rem}
+.tech-stack{margin-top:2rem;display:flex;flex-wrap:wrap;gap:0.5rem}
+.tech-pill{background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);border-radius:20px;padding:0.3rem 0.9rem;font-size:0.78rem;color:var(--text-secondary);font-weight:600;position:relative;cursor:default;transition:all var(--transition-fast)}
+.tech-pill:hover{background:rgba(255,119,51,0.1);border-color:rgba(255,119,51,0.4);color:var(--grafana-orange)}
+.tech-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--dark-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:0.4rem 0.75rem;font-size:0.75rem;color:var(--text-primary);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity var(--transition-fast);z-index:100}
+.tech-pill:hover .tech-tooltip{opacity:1}
+.module-next{display:inline-flex;align-items:center;gap:0.5rem;margin-top:2rem;color:var(--grafana-orange);font-weight:600;font-size:0.9rem;transition:gap var(--transition-fast)}
+.module-next:hover{gap:0.75rem}
+
+/* ============================================================
+   14. CSS MOCKUPS — TERMINAL / CHARTS
+   ============================================================ */
+.mockup-terminal{background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-lg);overflow:hidden;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;box-shadow:var(--shadow-lg)}
+.terminal-header{background:#1a1d26;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+.terminal-dot{width:12px;height:12px;border-radius:50%}
+.terminal-dot-red{background:#E02F44}
+.terminal-dot-yellow{background:#FADE2A}
+.terminal-dot-green{background:#73BF69}
+.terminal-title{margin-left:0.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase}
+.terminal-body{padding:1.25rem}
+.cluster-row{padding:0.75rem;border-radius:var(--radius-sm);margin-bottom:0.5rem;border-left:3px solid;font-size:0.82rem}
+.cluster-row-red{background:rgba(224,47,68,0.08);border-color:#E02F44}
+.cluster-row-yellow{background:rgba(250,173,20,0.08);border-color:#FAAD14}
+.cluster-row-orange{background:rgba(255,119,51,0.08);border-color:#FF7733}
+.cluster-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem}
+.cluster-name{font-weight:700;color:var(--text-primary)}
+.cluster-count{background:rgba(255,255,255,0.1);border-radius:4px;padding:0.15rem 0.5rem;font-size:0.72rem;font-weight:700}
+.cluster-desc{color:var(--text-muted);font-size:0.78rem}
+.terminal-footer{border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 1.25rem;font-size:0.75rem;color:var(--success);display:flex;align-items:center;gap:0.5rem}
+.blink{animation:blink 1.2s step-end infinite}
+
+.mockup-flamegraph{background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+.flame-bars{padding:1.5rem 1.25rem 0.75rem}
+.flame-bar{border-radius:4px;height:28px;margin-bottom:4px;display:flex;align-items:center;padding:0 0.75rem;font-size:0.75rem;font-weight:600;color:rgba(255,255,255,0.9);cursor:pointer;transition:filter var(--transition-fast)}
+.flame-bar:hover{filter:brightness(1.2)}
+.flame-ai-bubble{background:rgba(255,119,51,0.08);border:1px solid rgba(255,119,51,0.3);border-radius:var(--radius-md);padding:1rem 1.25rem;margin:0 1.25rem 1.25rem;font-size:0.8rem}
+.flame-ai-label{font-size:0.72rem;font-weight:700;color:var(--grafana-orange);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem}
+.flame-ai-text{color:var(--text-secondary);line-height:1.5}
+
+.mockup-forecast{background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-lg);overflow:hidden;padding:1.5rem;box-shadow:var(--shadow-lg)}
+.forecast-label{font-size:0.75rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem}
+.forecast-chart{position:relative;height:160px}
+.forecast-svg{width:100%;height:100%}
+
+.mockup-dep-graph{background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-lg);padding:2rem;box-shadow:var(--shadow-lg);position:relative;min-height:260px}
+.dep-node{position:absolute;width:70px;height:70px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:0.68rem;font-weight:700;text-align:center;line-height:1.2}
+.dep-node-ok{background:rgba(82,196,26,0.1);border-color:var(--success);color:var(--success)}
+.dep-node-error{background:rgba(224,47,68,0.15);border-color:var(--grafana-red);color:var(--grafana-red);animation:architecturePulse 2s ease infinite}
+.dep-node-warn{background:rgba(250,173,20,0.1);border-color:var(--warning);color:var(--warning)}
+.dep-edge{position:absolute;background:rgba(255,255,255,0.12);height:2px;transform-origin:left center}
+.dep-edge-error{background:rgba(224,47,68,0.5)}
+
+.mockup-saafe{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:1.5rem}
+.saafe-card{border-radius:var(--radius-md);padding:1rem;border:1px solid;text-align:center}
+.saafe-card h4{font-size:0.82rem;font-weight:700;margin-bottom:0.25rem}
+.saafe-card p{font-size:0.75rem;margin:0}
+
+.mockup-slo{background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+.slo-table{width:100%;border-collapse:collapse;font-size:0.82rem}
+.slo-table th{background:rgba(255,255,255,0.05);padding:0.6rem 1rem;text-align:left;font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.08)}
+.slo-table td{padding:0.65rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text-secondary)}
+.slo-table tr:last-child td{border-bottom:none}
+.slo-concepts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:1.5rem}
+.concept-card{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:1.1rem}
+.concept-card h4{font-size:0.85rem;color:var(--grafana-orange);margin-bottom:0.4rem}
+.concept-card p{font-size:0.78rem;margin:0}
+
+/* ============================================================
+   15. IMPACT SECTION
+   ============================================================ */
+.impact{background:var(--dark-bg);padding:6rem 0;position:relative;overflow:hidden}
+.impact::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);background-size:32px 32px}
+.impact-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;margin:3rem 0}
+.impact-stat{text-align:center}
+.impact-stat-number{font-size:3.5rem;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--grafana-orange),#ff9966);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.impact-stat-label{font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.5rem}
+.timeline-wrap{margin-top:4rem}
+.timeline-label{font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;text-align:center;margin-bottom:1.5rem}
+.timeline-track{display:flex;align-items:center;position:relative;gap:0}
+.timeline-item{flex:1;text-align:center;position:relative}
+.timeline-item::before{content:'';position:absolute;top:14px;left:50%;right:-50%;height:2px;background:linear-gradient(90deg,var(--grafana-orange),rgba(255,119,51,0.3))}
+.timeline-item:last-child::before{display:none}
+.timeline-dot{width:28px;height:28px;background:var(--grafana-orange);border-radius:50%;margin:0 auto 0.75rem;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;position:relative;z-index:1}
+.timeline-year{font-size:0.85rem;font-weight:700;color:var(--grafana-orange);margin-bottom:0.25rem}
+.timeline-desc{font-size:0.78rem;color:var(--text-muted);padding:0 0.5rem}
+
+/* ============================================================
+   16. ARCHITECTURE SECTION
+   ============================================================ */
+.architecture{background:var(--dark-surface);padding:6rem 0}
+.arch-diagram{margin-top:3rem}
+.arch-layer{border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.25rem 2rem;margin-bottom:0;display:flex;align-items:center;gap:2rem;position:relative;background:var(--glass-bg)}
+.arch-layer-label{font-size:0.72rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);min-width:130px;flex-shrink:0}
+.arch-items{display:flex;flex-wrap:wrap;gap:0.5rem;flex:1}
+.arch-item{background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:0.4rem 0.9rem;font-size:0.8rem;font-weight:600;color:var(--text-secondary);white-space:nowrap}
+.arch-item.orange{background:rgba(255,119,51,0.1);border-color:rgba(255,119,51,0.3);color:var(--grafana-orange)}
+.arch-item.blue{background:rgba(24,144,255,0.1);border-color:rgba(24,144,255,0.3);color:var(--info)}
+.arch-arrow{text-align:center;padding:0.4rem 0;color:rgba(255,119,51,0.5);font-size:1.2rem;animation:arrowPulse 2s ease-in-out infinite}
+.arch-users{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:2rem}
+.arch-user{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:1rem;text-align:center;font-size:0.82rem;color:var(--text-secondary);font-weight:600}
+.arch-user span{display:block;font-size:1.4rem;margin-bottom:0.4rem}
+
+/* ============================================================
+   17. TECH STACK SECTION
+   ============================================================ */
+.tech-section{background:var(--dark-bg);padding:6rem 0}
+.tech-row{display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;margin-bottom:1.25rem}
+.tech-stack-pill{background:var(--dark-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:0.6rem 1.3rem;font-size:0.88rem;font-weight:600;color:var(--text-secondary);transition:all var(--transition-fast);cursor:default;position:relative}
+.tech-stack-pill:hover{background:rgba(255,119,51,0.08);border-color:rgba(255,119,51,0.4);color:var(--text-primary);transform:translateY(-2px)}
+.tech-stack-pill .tech-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--dark-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:0.4rem 0.85rem;font-size:0.75rem;color:var(--text-primary);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity var(--transition-fast);z-index:100;box-shadow:var(--shadow-md)}
+.tech-stack-pill:hover .tech-tooltip{opacity:1}
+
+/* ============================================================
+   18. FAQ SECTION
+   ============================================================ */
+.faq{background:var(--dark-surface);padding:6rem 0}
+.faq-list{max-width:820px;margin:3rem auto 0;display:flex;flex-direction:column;gap:0.75rem}
+.faq-item{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-md);overflow:hidden;transition:border-color var(--transition-fast)}
+.faq-item.open{border-color:rgba(255,119,51,0.35)}
+.faq-q{padding:1.25rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:600;font-size:0.97rem;color:var(--text-primary);transition:color var(--transition-fast)}
+.faq-q:hover{color:var(--grafana-orange)}
+.faq-arrow{font-size:0.85rem;transition:transform var(--transition-base);color:var(--text-muted);flex-shrink:0}
+.faq-item.open .faq-arrow{transform:rotate(180deg);color:var(--grafana-orange)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height var(--transition-slow);padding:0 1.5rem}
+.faq-item.open .faq-a{max-height:300px;padding:0 1.5rem 1.25rem}
+.faq-a p{font-size:0.92rem;color:var(--text-secondary);line-height:1.7;margin:0}
+
+/* ============================================================
+   19. CTA & FOOTER
+   ============================================================ */
+.cta-section{padding:6rem 0;background:linear-gradient(135deg,var(--dark-bg) 0%,var(--albertsons-blue-dark) 50%,var(--dark-bg) 100%);position:relative;overflow:hidden;text-align:center}
+.cta-section::before{content:'';position:absolute;width:800px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(ellipse,rgba(255,119,51,0.15),transparent 70%);pointer-events:none}
+.cta-section h2{margin-bottom:1rem;position:relative;z-index:1}
+.cta-section p{max-width:580px;margin:0 auto 2rem;font-size:1.05rem;position:relative;z-index:1}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 0 2rem}
+.footer-gradient-line{height:2px;background:linear-gradient(90deg,transparent,var(--grafana-orange),var(--albertsons-blue-light),transparent);margin-bottom:3rem;animation:gradientShift 4s ease infinite;background-size:300% 100%}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
+.footer-logo{display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem}
+.footer-brand{font-size:0.9rem;font-weight:700;color:var(--text-primary)}
+.footer-tagline{font-size:0.82rem;color:var(--text-muted);max-width:260px;line-height:1.6}
+.footer-col h4{font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem}
+.footer-col a{display:block;font-size:0.88rem;color:var(--text-secondary);margin-bottom:0.5rem;transition:color var(--transition-fast)}
+.footer-col a:hover{color:var(--grafana-orange)}
+.footer-bottom{border-top:1px solid var(--glass-border);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-copy{font-size:0.8rem;color:var(--text-muted)}
+
+/* ============================================================
+   20. BACK TO TOP
+   ============================================================ */
+#back-to-top{position:fixed;bottom:2rem;right:2rem;width:44px;height:44px;background:var(--grafana-orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;cursor:pointer;z-index:500;opacity:0;transform:translateY(20px);transition:all var(--transition-base);box-shadow:0 4px 16px rgba(255,119,51,0.4)}
+#back-to-top.visible{opacity:1;transform:translateY(0)}
+#back-to-top:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(255,119,51,0.5)}
+
+/* ============================================================
+   21. ANIMATIONS
+   ============================================================ */
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg);opacity:0.6}50%{transform:translateY(-22px) rotate(180deg);opacity:1}}
+@keyframes gentleGlow{0%{opacity:0.3;transform:scale(1)}100%{opacity:0.65;transform:scale(1.2)}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes architecturePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,45,85,0.5)}50%{box-shadow:0 0 0 10px rgba(255,45,85,0)}}
+@keyframes arrowPulse{0%,100%{opacity:0.4;transform:translateY(0)}50%{opacity:1;transform:translateY(4px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes borderSpin{to{--a:360deg}}
+@property --a{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes liveGlow{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+@keyframes slideInDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ============================================================
+   22. SCROLL REVEAL
+   ============================================================ */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.stagger>*{opacity:0;transform:translateY(20px);transition:opacity 0.5s ease,transform 0.5s ease}
+.stagger.visible>*:nth-child(1){opacity:1;transform:translateY(0);transition-delay:0.05s}
+.stagger.visible>*:nth-child(2){opacity:1;transform:translateY(0);transition-delay:0.1s}
+.stagger.visible>*:nth-child(3){opacity:1;transform:translateY(0);transition-delay:0.15s}
+.stagger.visible>*:nth-child(4){opacity:1;transform:translateY(0);transition-delay:0.2s}
+.stagger.visible>*:nth-child(5){opacity:1;transform:translateY(0);transition-delay:0.25s}
+.stagger.visible>*:nth-child(6){opacity:1;transform:translateY(0);transition-delay:0.3s}
+
+/* ============================================================
+   23. RESPONSIVE
+   ============================================================ */
+@media(max-width:1024px){
+  .module-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .footer-top{grid-template-columns:1fr 1fr;gap:2rem}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .impact-stats{grid-template-columns:repeat(2,1fr)}
+  .slo-concepts{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .nav-links,.search-input,.nav-cta{display:none!important}
+  .hamburger{display:flex}
+  .module-grid{grid-template-columns:1fr}
+  .module-grid-2,.grid-2{grid-template-columns:1fr}
+  .module-grid-2.reverse{direction:ltr}
+  .benefits-grid{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .impact-stats{grid-template-columns:repeat(2,1fr)}
+  .arch-users{grid-template-columns:repeat(2,1fr)}
+  .footer-top{grid-template-columns:1fr}
+  .footer-bottom{flex-direction:column;text-align:center}
+  .mockup-saafe{grid-template-columns:1fr}
+  .arch-layer{flex-direction:column;gap:0.75rem;padding:1rem}
+  .timeline-track{flex-direction:column;align-items:flex-start;gap:1rem}
+  .timeline-item::before{display:none}
+  .grid-3,.grid-6{grid-template-columns:1fr}
+  .slo-concepts{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .hero-stats{grid-template-columns:1fr 1fr}
+  .hero-ctas{flex-direction:column;align-items:center}
+  .cta-btns{flex-direction:column;align-items:center}
+}
+
+/* ============================================================
+   24. PRINT
+   ============================================================ */
+@media print{
+  header,#back-to-top,#progress-bar,.hero-particles,.hero-blob,.ticker-track{display:none!important}
+  body{background:#fff;color:#000}
+  .glass-card,.module-card,.mockup-terminal{border:1px solid #ddd;box-shadow:none;backdrop-filter:none}
+  a{text-decoration:underline}
+}
+
+/* ============================================================
+   25. REDUCED MOTION
+   ============================================================ */
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal,.stagger>*{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<!-- Custom Cursor -->
+<div id="cursor-dot" aria-hidden="true"></div>
+<div id="cursor-ring" aria-hidden="true"></div>
+
+<!-- Command Palette -->
+<div id="cmd-overlay" role="dialog" aria-label="Command palette" aria-modal="true">
+  <div id="cmd-palette">
+    <div id="cmd-search-wrap">
+      <span id="cmd-search-icon">⌕</span>
+      <input id="cmd-search-input" type="text" placeholder="Search modules, sections..." autocomplete="off" spellcheck="false">
+      <span id="cmd-kbd">ESC</span>
+    </div>
+    <div id="cmd-results">
+      <a href="#alert-clustering" class="cmd-item" data-cmd="Alert Clustering ML noise reduction alerts"><div class="cmd-item-icon">🔔</div><div class="cmd-item-text"><strong>Alert Clustering</strong><span>ML-powered noise reduction · cuts 90% of alert volume</span></div></a>
+      <a href="#flamegraph-ai" class="cmd-item" data-cmd="Flamegraph AI performance profiling pyroscope"><div class="cmd-item-icon">🔥</div><div class="cmd-item-text"><strong>Flamegraph AI</strong><span>GPT-4.1 flame graph analysis · CPU + memory profiling</span></div></a>
+      <a href="#forecasting" class="cmd-item" data-cmd="Metrics Forecast prophet prediction capacity"><div class="cmd-item-icon">📈</div><div class="cmd-item-text"><strong>Metrics Forecast</strong><span>7-day prediction · Meta Prophet seasonality models</span></div></a>
+      <a href="#rca-hub" class="cmd-item" data-cmd="RCA Hub root cause analysis investigation"><div class="cmd-item-icon">🔍</div><div class="cmd-item-text"><strong>RCA Hub</strong><span>360° root cause analysis · dependency graph + AI</span></div></a>
+      <a href="#service-insights" class="cmd-item" data-cmd="Service Insights SAAFE scoring risk leaderboard"><div class="cmd-item-icon">🛡️</div><div class="cmd-item-text"><strong>Service Insights</strong><span>SAAFE risk scoring · real-time service leaderboard</span></div></a>
+      <a href="#slo-framework" class="cmd-item" data-cmd="SLO Framework error budget burn rate reliability"><div class="cmd-item-icon">📊</div><div class="cmd-item-text"><strong>Enterprise SLO Framework</strong><span>Error budgets + burn rate alerts · Google SRE principles</span></div></a>
+      <a href="#architecture" class="cmd-item" data-cmd="Architecture stack infrastructure deployment"><div class="cmd-item-icon">🏗️</div><div class="cmd-item-text"><strong>Architecture</strong><span>Full platform architecture diagram</span></div></a>
+      <a href="#impact" class="cmd-item" data-cmd="Impact metrics results MTTR noise reduction"><div class="cmd-item-icon">💡</div><div class="cmd-item-text"><strong>Platform Impact</strong><span>Measured results · MTTR, noise reduction, SLO coverage</span></div></a>
+      <a href="#faq" class="cmd-item" data-cmd="FAQ questions answers help"><div class="cmd-item-icon">❓</div><div class="cmd-item-text"><strong>FAQ</strong><span>Frequently asked questions</span></div></a>
+    </div>
+    <div class="cmd-footer">
+      <span><kbd>↑↓</kbd> Navigate</span>
+      <span><kbd>↵</kbd> Go to section</span>
+      <span><kbd>ESC</kbd> Close</span>
+    </div>
+  </div>
+</div>
+
+<!-- Skip Link -->
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- Reading Progress Bar -->
+<div id="progress-bar" role="progressbar" aria-label="Reading progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+
+<!-- ============================================================
+     HEADER & NAV
+     ============================================================ -->
+<header id="site-header" role="banner">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <div class="nav-logo-icon" aria-hidden="true">🔶</div>
+      <div>
+        <span class="nav-logo-text">AIOps Hub</span>
+        <span class="nav-logo-sub">Enterprise Observability Platform</span>
+      </div>
+    </div>
+    <nav class="nav-links" role="navigation" aria-label="Main navigation">
+      <a href="#overview">Overview</a>
+      <a href="#alert-clustering">Alert Clustering</a>
+      <a href="#flamegraph-ai">Flamegraph AI</a>
+      <a href="#forecasting">Forecasting</a>
+      <a href="#rca-hub">RCA Hub</a>
+      <a href="#service-insights">Service Insights</a>
+      <a href="#slo-framework">SLO Framework</a>
+    </nav>
+    <div class="nav-right">
+      <input type="search" class="search-input" id="search-input" placeholder="🔍 Search modules..." aria-label="Search modules" autocomplete="off">
+      <a href="#" class="btn btn-primary nav-cta" style="padding:0.5rem 1.1rem;font-size:0.85rem">Open Grafana →</a>
+      <button class="hamburger" id="hamburger-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-drawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Nav Overlay -->
+<div class="nav-overlay" id="nav-overlay" role="presentation"></div>
+<div class="nav-drawer" id="nav-drawer" role="dialog" aria-label="Navigation menu" aria-modal="true">
+  <button class="nav-close" id="nav-close" aria-label="Close navigation">✕</button>
+  <div style="margin-top:2rem" class="nav-drawer-links">
+    <a href="#overview">📊 Overview</a>
+    <a href="#alert-clustering">🔔 Alert Clustering</a>
+    <a href="#flamegraph-ai">🔥 Flamegraph AI</a>
+    <a href="#forecasting">📈 Metrics Forecast</a>
+    <a href="#rca-hub">🔍 RCA Hub</a>
+    <a href="#service-insights">🛡️ Service Insights</a>
+    <a href="#slo-framework">📊 Enterprise SLO Framework</a>
+    <a href="#impact">💡 Platform Impact</a>
+    <a href="#architecture">🏗️ Architecture</a>
+    <a href="#faq">❓ FAQ</a>
+  </div>
+  <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid var(--glass-border)">
+    <a href="#" class="btn btn-primary" style="width:100%;justify-content:center">Open Grafana →</a>
+  </div>
+</div>
+
+<!-- ============================================================
+     HERO SECTION
+     ============================================================ -->
+<main id="main">
+<section class="hero" aria-labelledby="hero-heading">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+    <div class="hero-particles" id="hero-particles"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>AIOps Intelligence Suite · 6 Modules Active</div>
+    <h1 id="hero-heading" class="text-gradient"><span id="typewriter-text"></span><span id="typewriter-cursor"></span></h1>
+    <p class="hero-sub">
+      Modern enterprises operate thousands of microservices across Kubernetes, generating millions of signals daily.
+      The AIOps Intelligence Hub moves beyond reactive dashboards into predictive, AI-powered operational intelligence —
+      turning signal noise into clear, actionable insight in seconds.
+    </p>
+    <div class="hero-status" aria-label="System status" role="status">
+      <span class="status-item"><span class="status-dot green"></span>All Signals Active</span>
+      <span class="status-sep">·</span>
+      <span class="status-item"><span class="status-dot green"></span>6 Modules Running</span>
+      <span class="status-sep">·</span>
+      <span class="status-item"><span class="status-dot orange"></span><span id="live-alert-count">3</span> Clusters Active</span>
+    </div>
+    <div class="hero-ctas">
+      <a href="#overview" class="btn btn-primary">Explore All Capabilities →</a>
+      <button class="btn btn-secondary" id="open-cmd-btn">⌘K&nbsp; Command Palette</button>
+    </div>
+    <div class="hero-stats stagger" role="region" aria-label="Key metrics">
+      <div class="stat-card">
+        <span class="stat-number" data-count="6">0</span>
+        <div class="stat-label">AI-Powered Modules</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" data-count="90" data-suffix="%">0%</span>
+        <div class="stat-label">Alert Noise Reduction</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" data-count="5" data-prefix="< " data-suffix=" min">< 0 min</span>
+        <div class="stat-label">MTTR Improvement</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" data-count="99.9" data-suffix="%">0%</span>
+        <div class="stat-label">SLO Target Coverage</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>ALERT CLUSTERING</span><span class="ticker-dot">·</span>
+      <span>FLAMEGRAPH AI</span><span class="ticker-dot">·</span>
+      <span>METRICS FORECAST</span><span class="ticker-dot">·</span>
+      <span>RCA HUB</span><span class="ticker-dot">·</span>
+      <span>SERVICE INSIGHTS</span><span class="ticker-dot">·</span>
+      <span>ENTERPRISE SLO FRAMEWORK</span><span class="ticker-dot">·</span>
+      <span>ALERT CLUSTERING</span><span class="ticker-dot">·</span>
+      <span>FLAMEGRAPH AI</span><span class="ticker-dot">·</span>
+      <span>METRICS FORECAST</span><span class="ticker-dot">·</span>
+      <span>RCA HUB</span><span class="ticker-dot">·</span>
+      <span>SERVICE INSIGHTS</span><span class="ticker-dot">·</span>
+      <span>ENTERPRISE SLO FRAMEWORK</span><span class="ticker-dot">·</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     OVERVIEW / MODULE GRID
+     ============================================================ -->
+<section class="overview" id="overview" aria-labelledby="overview-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">⚡ Platform Overview</div>
+      <h2 id="overview-heading">Six Capabilities. One Intelligent Platform.</h2>
+      <p>Enterprise AIOps built on Google SRE principles — bringing ML, LLM, and predictive analytics directly into Grafana to give every engineer a 24/7 AI co-pilot.</p>
+    </div>
+    <div class="module-grid stagger" role="list">
+      <div class="module-card" role="listitem" onclick="scrollTo('alert-clustering')" tabindex="0" onkeydown="if(event.key==='Enter')scrollTo('alert-clustering')" aria-label="Navigate to Alert Clustering module">
+        <div class="module-icon">🔔</div>
+        <div class="badge badge-orange" style="margin-bottom:0.5rem">ML-Powered</div>
+        <h3>Alert Clustering</h3>
+        <p>Signal unification engine that transforms thousands of alerts into a handful of precise, actionable incident clusters using semantic ML.</p>
+        <span class="module-link">Learn More →</span>
+      </div>
+      <div class="module-card" role="listitem" onclick="scrollTo('flamegraph-ai')" tabindex="0" onkeydown="if(event.key==='Enter')scrollTo('flamegraph-ai')" aria-label="Navigate to Flamegraph AI module">
+        <div class="module-icon">🔥</div>
+        <div class="badge badge-red" style="margin-bottom:0.5rem">GPT-4.1</div>
+        <h3>Flamegraph AI</h3>
+        <p>LLM-powered performance diagnosis that reads your flame graphs and delivers plain-English root cause analysis in seconds.</p>
+        <span class="module-link">Learn More →</span>
+      </div>
+      <div class="module-card" role="listitem" onclick="scrollTo('forecasting')" tabindex="0" onkeydown="if(event.key==='Enter')scrollTo('forecasting')" aria-label="Navigate to Forecasting module">
+        <div class="module-icon">📈</div>
+        <div class="badge badge-green" style="margin-bottom:0.5rem">Prophet</div>
+        <h3>Metrics Forecast</h3>
+        <p>Predictive time-series analytics that tells you what your infrastructure will look like tomorrow, next week, and next month.</p>
+        <span class="module-link">Learn More →</span>
+      </div>
+      <div class="module-card" role="listitem" onclick="scrollTo('rca-hub')" tabindex="0" onkeydown="if(event.key==='Enter')scrollTo('rca-hub')" aria-label="Navigate to RCA Hub module">
+        <div class="module-icon">🔍</div>
+        <div class="badge badge-success" style="margin-bottom:0.5rem">GA</div>
+        <h3>RCA Hub</h3>
+        <p>360° root cause intelligence that unifies dependency graphs, golden signals, event timelines, and LLM summaries in one workspace.</p>
+        <span class="module-link">Learn More →</span>
+      </div>
+      <div class="module-card" role="listitem" onclick="scrollTo('service-insights')" tabindex="0" onkeydown="if(event.key==='Enter')scrollTo('service-insights')" aria-label="Navigate to Service Insights module">
+        <div class="module-icon">🛡️</div>
+        <div class="badge badge-success" style="margin-bottom:0.5rem">GA</div>
+        <h3>Service Insights</h3>
+        <p>SAAFE prioritization engine that scores and ranks every service by real-time risk across five operational event categories.</p>
+        <span class="module-link">Learn More →</span>
+      </div>
+      <div class="module-card" role="listitem" onclick="scrollTo('slo-framework')" tabindex="0" onkeydown="if(event.key==='Enter')scrollTo('slo-framework')" aria-label="Navigate to SLO Framework module">
+        <div class="module-icon">📊</div>
+        <div class="badge badge-success" style="margin-bottom:0.5rem">GA</div>
+        <h3>Enterprise SLO Framework</h3>
+        <p>Enterprise reliability standard built on Google SRE principles — a unified language for SLIs, SLOs, and error budgets across 200+ services.</p>
+        <span class="module-link">Learn More →</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MODULE 1: ALERT CLUSTERING
+     ============================================================ -->
+<section class="module-section" id="alert-clustering" aria-labelledby="alert-clustering-heading">
+  <div class="container">
+    <div class="module-grid-2">
+      <div class="module-story reveal">
+        <div class="module-number">Module 01 / 06</div>
+        <div class="section-label">🔔 Alert Clustering</div>
+        <h2 id="alert-clustering-heading">From Thousands of Alerts to<br><span class="text-orange">Five Actionable Clusters</span></h2>
+        <p>Traditional alert routing creates war rooms of noise. Engineers spend the first hour of any incident just triaging which alerts actually matter — while the real issue silently compounds.</p>
+        <p>Our ML-powered clustering engine groups semantically and temporally related alerts into meaningful incident clusters in real time, reducing alert fatigue by up to 90% and surfacing the true blast radius instantly.</p>
+        <div class="benefits-grid">
+          <div class="benefit-item"><span class="benefit-icon">⚡</span><div><h4>Real-Time Grouping</h4><p>Alerts clustered within 500ms using streaming ML inference.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🧠</span><div><h4>Semantic Similarity</h4><p>Embeddings understand meaning, not just labels or names.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🔗</span><div><h4>Topology-Aware</h4><p>Groups alerts by service dependency graph depth.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">📉</span><div><h4>90% Noise Reduction</h4><p>Suppress redundant child alerts automatically.</p></div></div>
+        </div>
+        <div class="how-it-works">
+          <h4>How It Works</h4>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Ingest &amp; Embed</strong><span>Every alert is embedded via OpenAI text-embedding-3-large in real time.</span></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Temporal Windowing</strong><span>Alerts within 5-minute windows are candidates for co-clustering.</span></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Semantic + Topological Merge</strong><span>Cosine similarity ≥ 0.75 and service dependency graph traversal merge candidates.</span></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Cluster Scoring &amp; Routing</strong><span>Clusters ranked by impact score. P1 clusters auto-trigger investigation.</span></div></div>
+          </div>
+        </div>
+        <div class="tech-stack">
+          <div class="tech-pill">Grafana Alerting<span class="tech-tooltip">Webhook receiver for all alert events</span></div>
+          <div class="tech-pill">OpenAI Embeddings<span class="tech-tooltip">text-embedding-3-large for semantic grouping</span></div>
+          <div class="tech-pill">HDBSCAN<span class="tech-tooltip">Density-based clustering algorithm</span></div>
+          <div class="tech-pill">Loki<span class="tech-tooltip">Alert history and audit trail storage</span></div>
+          <div class="tech-pill">Redis Streams<span class="tech-tooltip">Event queue for alert pipeline</span></div>
+        </div>
+        <a href="#flamegraph-ai" class="module-next">Next: Flamegraph AI →</a>
+      </div>
+      <div class="reveal">
+        <div class="mockup-terminal" role="img" aria-label="Alert clustering visualization">
+          <div class="terminal-header">
+            <div class="terminal-dot terminal-dot-red"></div>
+            <div class="terminal-dot terminal-dot-yellow"></div>
+            <div class="terminal-dot terminal-dot-green"></div>
+            <span class="terminal-title">Alert Cluster Engine · Live</span>
+          </div>
+          <div class="terminal-body">
+            <div class="cluster-row cluster-row-red">
+              <div class="cluster-row-head"><span class="cluster-name">🔴 Cluster C-001 · Payment Gateway</span><span class="cluster-count">14 alerts → 1</span></div>
+              <div class="cluster-desc">payment-svc: HighErrorRate + DB ConnectionPool + checkout-svc Latency + 11 suppressed</div>
+            </div>
+            <div class="cluster-row cluster-row-yellow">
+              <div class="cluster-row-head"><span class="cluster-name">🟡 Cluster C-002 · Search Index</span><span class="cluster-count">8 alerts → 1</span></div>
+              <div class="cluster-desc">search-api: P99 Latency + Elasticsearch CPU + 6 suppressed downstream</div>
+            </div>
+            <div class="cluster-row cluster-row-orange">
+              <div class="cluster-row-head"><span class="cluster-name">🟠 Cluster C-003 · CDN Edge</span><span class="cluster-count">5 alerts → 1</span></div>
+              <div class="cluster-desc">cdn-edge: CacheHitRate degraded + increased origin requests + 3 suppressed</div>
+            </div>
+            <div style="padding:0.5rem 0;font-size:0.78rem;color:var(--text-muted);border-top:1px solid rgba(255,255,255,0.06);margin-top:0.5rem">87 raw alerts suppressed · 3 clusters active · 0 false negatives</div>
+          </div>
+          <div class="terminal-footer">
+            <span style="background:var(--success);width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>
+            Clustering engine healthy · last run 0.4s ago <span class="blink">▋</span>
+          </div>
+        </div>
+        <div class="slo-concepts" style="margin-top:1.5rem">
+          <div class="concept-card"><h4>Temporal Layer</h4><p>5-min sliding window groups co-occurring alerts from the same time burst.</p></div>
+          <div class="concept-card"><h4>Semantic Layer</h4><p>Embedding cosine similarity merges alerts with the same underlying meaning.</p></div>
+          <div class="concept-card"><h4>Topological Layer</h4><p>Service dependency graph propagates parent→child alert merging.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MODULE 2: FLAMEGRAPH AI
+     ============================================================ -->
+<section class="module-section" id="flamegraph-ai" aria-labelledby="flamegraph-heading">
+  <div class="container">
+    <div class="module-grid-2 reverse">
+      <div class="module-story reveal">
+        <div class="module-number">Module 02 / 06</div>
+        <div class="section-label">🔥 Flamegraph AI</div>
+        <h2 id="flamegraph-heading">Plain-English Performance<br><span class="text-orange">Diagnosis in Seconds</span></h2>
+        <p>Reading flame graphs requires expert knowledge most engineers don't have on call at 3 AM. Spotting a hot function buried in 500 frames of a CPU profile is time-consuming and error-prone.</p>
+        <p>Flamegraph AI integrates directly into Grafana Pyroscope, captures the current CPU or memory profile, and sends it to GPT-4.1 for instant, plain-English diagnosis — with function names, call paths, and fix recommendations.</p>
+        <div class="benefits-grid">
+          <div class="benefit-item"><span class="benefit-icon">🔥</span><div><h4>One-Click Analysis</h4><p>Trigger AI analysis from within any Pyroscope view.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">📖</span><div><h4>Plain-English Output</h4><p>No flame graph expertise needed for on-call engineers.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🔄</span><div><h4>Baseline Comparison</h4><p>Diff profiles between deployment versions automatically.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">⚡</span><div><h4>&lt; 8s Analysis</h4><p>Full GPT-4.1 analysis in under 8 seconds end-to-end.</p></div></div>
+        </div>
+        <div class="how-it-works">
+          <h4>How It Works</h4>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Profile Capture</strong><span>Pyroscope API fetches flamebearer JSON for selected time range.</span></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Hot Path Extraction</strong><span>Top-N hottest call stacks extracted and serialized for LLM context.</span></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content"><strong>GPT-4.1 Analysis</strong><span>LLM identifies bottlenecks, explains call chains, suggests fixes.</span></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Inline Panel Annotation</strong><span>Analysis injected as Grafana annotation on the flame graph panel.</span></div></div>
+          </div>
+        </div>
+        <div class="tech-stack">
+          <div class="tech-pill">Pyroscope<span class="tech-tooltip">Continuous profiling data source</span></div>
+          <div class="tech-pill">GPT-4.1<span class="tech-tooltip">LLM for flame graph interpretation</span></div>
+          <div class="tech-pill">Grafana Plugin SDK<span class="tech-tooltip">Panel plugin for inline AI button</span></div>
+          <div class="tech-pill">Python FastAPI<span class="tech-tooltip">AI analysis backend microservice</span></div>
+        </div>
+        <a href="#forecasting" class="module-next">Next: Metrics Forecast →</a>
+      </div>
+      <div class="reveal">
+        <div class="mockup-flamegraph" role="img" aria-label="Flamegraph AI visualization">
+          <div class="terminal-header">
+            <div class="terminal-dot terminal-dot-red"></div>
+            <div class="terminal-dot terminal-dot-yellow"></div>
+            <div class="terminal-dot terminal-dot-green"></div>
+            <span class="terminal-title">Pyroscope · CPU Profile · checkout-svc</span>
+          </div>
+          <div class="flame-bars">
+            <div class="flame-bar" style="background:#E02F44;width:100%">main() · 100% · 8.2s</div>
+            <div class="flame-bar" style="background:#E05C33;width:94%">http.ListenAndServe() · 94% · 7.7s</div>
+            <div class="flame-bar" style="background:#E08833;width:88%">handler.ProcessOrder() · 88% · 7.2s</div>
+            <div class="flame-bar" style="background:#c0832a;width:76%">db.QueryContext() · 76% · 6.2s</div>
+            <div class="flame-bar" style="background:#a06a20;width:72%">pgx.Exec() · 72% · 5.9s</div>
+            <div class="flame-bar" style="background:#805015;width:58%">tls.Handshake() · 58% · 4.7s ⚠️</div>
+            <div class="flame-bar" style="background:#FADE2A;width:22%;color:#111">json.Marshal() · 22% · 1.8s</div>
+            <div class="flame-bar" style="background:#73BF69;width:12%;color:#111">cache.Get() · 12% · 1.0s</div>
+          </div>
+          <div class="flame-ai-bubble">
+            <div class="flame-ai-label">🤖 AI Analysis · GPT-4.1</div>
+            <div class="flame-ai-text"><strong style="color:var(--grafana-orange)">Critical bottleneck:</strong> <code style="background:rgba(255,255,255,0.08);padding:0.1rem 0.3rem;border-radius:3px">tls.Handshake()</code> consuming 58% CPU. New TLS connection created per DB query instead of pool reuse. <strong style="color:var(--text-primary)">Fix:</strong> Enable <code style="background:rgba(255,255,255,0.08);padding:0.1rem 0.3rem;border-radius:3px">pgx.PoolConfig.MaxConns=20</code> with 5-minute connection lifetime.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MODULE 3: METRICS FORECAST
+     ============================================================ -->
+<section class="module-section" id="forecasting" aria-labelledby="forecasting-heading">
+  <div class="container">
+    <div class="module-grid-2">
+      <div class="module-story reveal">
+        <div class="module-number">Module 03 / 06</div>
+        <div class="section-label">📈 Metrics Forecast</div>
+        <h2 id="forecasting-heading">Know What's Coming Before<br><span class="text-orange">It Becomes an Incident</span></h2>
+        <p>Reactive monitoring tells you what broke. Predictive forecasting tells you what's about to break — giving engineering teams hours, not minutes, to act.</p>
+        <p>Built on Meta's Prophet library with Mimir as the metrics backend, the forecasting engine models weekly seasonality, growth trends, and holiday effects to predict capacity exhaustion, SLO breaches, and traffic anomalies up to 7 days ahead.</p>
+        <div class="benefits-grid">
+          <div class="benefit-item"><span class="benefit-icon">🔮</span><div><h4>7-Day Horizon</h4><p>Predict capacity exhaustion and traffic spikes days in advance.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">📅</span><div><h4>Seasonality-Aware</h4><p>Models weekly, daily, and holiday patterns automatically.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🎯</span><div><h4>SLO Breach Prediction</h4><p>Proactively alert when error budget will be exhausted.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">☁️</span><div><h4>Capacity Planning</h4><p>Auto-generate scaling recommendations with cost estimates.</p></div></div>
+        </div>
+        <div class="how-it-works">
+          <h4>How It Works</h4>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Historical Pull</strong><span>90 days of metric history fetched from Mimir via PromQL range queries.</span></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Prophet Fitting</strong><span>Per-metric Prophet models trained with weekly + daily seasonality and changepoints.</span></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Anomaly Bands</strong><span>yhat_upper/yhat_lower confidence intervals overlaid on Grafana panels.</span></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Proactive Alerting</strong><span>Alert fires when forecast crosses capacity threshold before it happens.</span></div></div>
+          </div>
+        </div>
+        <div class="tech-stack">
+          <div class="tech-pill">Meta Prophet<span class="tech-tooltip">Time-series forecasting with seasonality</span></div>
+          <div class="tech-pill">Mimir / PromQL<span class="tech-tooltip">Historical metrics data source</span></div>
+          <div class="tech-pill">Grafana Annotations<span class="tech-tooltip">Forecast bands as panel overlays</span></div>
+          <div class="tech-pill">Celery<span class="tech-tooltip">Async model training scheduler</span></div>
+          <div class="tech-pill">scikit-learn<span class="tech-tooltip">Z-score anomaly detection baseline</span></div>
+        </div>
+        <a href="#rca-hub" class="module-next">Next: RCA Hub →</a>
+      </div>
+      <div class="reveal">
+        <div class="mockup-forecast" role="img" aria-label="Metrics forecast visualization">
+          <div class="forecast-label">CPU Usage — checkout-svc — 7-Day Forecast</div>
+          <div class="forecast-chart">
+            <svg class="forecast-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="forecastGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="rgba(115,191,105,0.15)"/>
+                  <stop offset="60%" stop-color="rgba(115,191,105,0.15)"/>
+                  <stop offset="100%" stop-color="rgba(255,119,51,0.2)"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,90 L240,85 L280,75 L320,60 L360,45 L400,30 L400,10 L360,20 L320,30 L280,40 L240,50 L0,55 Z" fill="url(#forecastGrad)"/>
+              <polyline points="0,90 40,88 80,92 120,80 160,84 200,82 240,85" stroke="#73BF69" stroke-width="2.5" fill="none"/>
+              <polyline points="240,85 280,75 320,60 360,45 400,28" stroke="#FF7733" stroke-width="2.5" fill="none" stroke-dasharray="6,4"/>
+              <line x1="0" y1="20" x2="400" y2="20" stroke="rgba(224,47,68,0.6)" stroke-width="1.5" stroke-dasharray="4,4"/>
+              <text x="4" y="16" fill="#E02F44" font-size="9" font-family="monospace">80% threshold</text>
+              <line x1="240" y1="0" x2="240" y2="160" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3,3"/>
+              <text x="242" y="12" fill="rgba(255,255,255,0.5)" font-size="9" font-family="monospace">Today</text>
+              <circle cx="380" cy="30" r="5" fill="#E02F44" opacity="0.8"/>
+              <text x="318" y="26" fill="#E02F44" font-size="9" font-family="monospace">⚠ Breach D+6</text>
+            </svg>
+          </div>
+          <div style="display:flex;gap:1rem;margin-top:0.75rem;flex-wrap:wrap">
+            <span style="font-size:0.75rem;color:var(--grafana-green)">━ Actual</span>
+            <span style="font-size:0.75rem;color:var(--grafana-orange)">╌ Forecast</span>
+            <span style="font-size:0.75rem;color:var(--grafana-red)">⚠ Breach Predicted Day 6</span>
+          </div>
+        </div>
+        <div class="slo-concepts" style="margin-top:1.5rem">
+          <div class="concept-card"><h4>Trend Detection</h4><p>Change-point detection finds sustained growth inflections automatically.</p></div>
+          <div class="concept-card"><h4>Error Budget Forecast</h4><p>Projects error budget burn rate and predicts exhaustion date per SLO window.</p></div>
+          <div class="concept-card"><h4>Capacity Recs</h4><p>Generates HPA/KEDA scaling recommendations with lead time and cost delta.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MODULE 4: RCA HUB
+     ============================================================ -->
+<section class="module-section" id="rca-hub" aria-labelledby="rca-heading">
+  <div class="container">
+    <div class="module-grid-2 reverse">
+      <div class="module-story reveal">
+        <div class="module-number">Module 04 / 06</div>
+        <div class="section-label">🔍 RCA Hub</div>
+        <h2 id="rca-heading">360° Root Cause Analysis<br><span class="text-orange">in One Workspace</span></h2>
+        <p>Incident investigation today means context-switching across 8 different tools, manually correlating timestamps, and building the dependency picture in your head. This burns 40+ engineer-minutes per incident.</p>
+        <p>RCA Hub brings dependency graphs, golden signals, deployment events, log anomalies, and AI-generated summaries into a single unified workspace — so you go from alert to root cause in under 5 minutes.</p>
+        <div class="benefits-grid">
+          <div class="benefit-item"><span class="benefit-icon">🗺️</span><div><h4>Dependency Blast Radius</h4><p>Interactive service graph showing propagation paths.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">📊</span><div><h4>Golden Signals</h4><p>Rate, Errors, Duration, Saturation all in one view.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🚀</span><div><h4>Deployment Correlation</h4><p>Change events overlaid on signal degradation timeline.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🤖</span><div><h4>AI Summary</h4><p>LLM synthesizes all signals into a plain-English RCA narrative.</p></div></div>
+        </div>
+        <div class="how-it-works">
+          <h4>How It Works</h4>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Signal Aggregation</strong><span>Queries Mimir, Loki, Tempo, and Pyroscope in parallel for the incident window.</span></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Event Timeline</strong><span>Deploys, config changes, and scaling events fetched from Grafana annotations.</span></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Dependency Graph Render</strong><span>D3-powered service map with health state propagation from Tempo trace data.</span></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content"><strong>AI RCA Narrative</strong><span>GPT-4o synthesizes all findings into a structured post-mortem draft.</span></div></div>
+          </div>
+        </div>
+        <div class="tech-stack">
+          <div class="tech-pill">Mimir + Loki + Tempo<span class="tech-tooltip">Multi-signal data aggregation</span></div>
+          <div class="tech-pill">GPT-4o<span class="tech-tooltip">RCA narrative synthesis</span></div>
+          <div class="tech-pill">D3.js<span class="tech-tooltip">Interactive dependency graph rendering</span></div>
+          <div class="tech-pill">Grafana Annotations<span class="tech-tooltip">Deploy + change event timeline</span></div>
+          <div class="tech-pill">RAPTOR RAG<span class="tech-tooltip">Historical incident knowledge retrieval</span></div>
+        </div>
+        <a href="#service-insights" class="module-next">Next: Service Insights →</a>
+      </div>
+      <div class="reveal">
+        <div class="mockup-dep-graph" role="img" aria-label="RCA dependency graph visualization" style="min-height:300px">
+          <div class="dep-node dep-node-ok" style="top:10%;left:40%">API<br>Gateway<br>✓</div>
+          <div class="dep-node dep-node-warn" style="top:35%;left:15%">Auth<br>Service<br>⚠</div>
+          <div class="dep-node dep-node-error" style="top:35%;left:62%">Checkout<br>Service<br>✗</div>
+          <div class="dep-node dep-node-ok" style="top:62%;left:5%">Cache<br>Layer<br>✓</div>
+          <div class="dep-node dep-node-error" style="top:62%;left:48%">Payment<br>DB<br>✗</div>
+          <div class="dep-node dep-node-ok" style="top:62%;left:78%">Inventory<br>API<br>✓</div>
+          <div class="dep-edge" style="top:22%;left:47%;width:18%;transform:rotate(28deg)"></div>
+          <div class="dep-edge" style="top:22%;left:44%;width:22%;transform:rotate(-25deg)"></div>
+          <div class="dep-edge dep-edge-error" style="top:50%;left:65%;width:16%;transform:rotate(35deg)"></div>
+          <div class="dep-edge" style="top:50%;left:22%;width:22%;transform:rotate(35deg)"></div>
+          <div class="dep-edge" style="top:50%;left:68%;width:16%;transform:rotate(-22deg)"></div>
+          <div style="position:absolute;bottom:1rem;left:1rem;right:1rem;background:rgba(224,47,68,0.08);border:1px solid rgba(224,47,68,0.3);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.78rem;color:var(--text-secondary)">🎯 <strong style="color:var(--grafana-red)">Root cause:</strong> Payment DB connection pool exhausted — propagating to Checkout Service → API Gateway error rate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MODULE 5: SERVICE INSIGHTS (SAAFE)
+     ============================================================ -->
+<section class="module-section" id="service-insights" aria-labelledby="service-insights-heading">
+  <div class="container">
+    <div class="module-grid-2">
+      <div class="module-story reveal">
+        <div class="module-number">Module 05 / 06</div>
+        <div class="section-label">🛡️ Service Insights</div>
+        <h2 id="service-insights-heading">Know Your Riskiest Services<br><span class="text-orange">Before They Page You</span></h2>
+        <p>With hundreds of microservices running simultaneously, knowing which ones need attention right now is impossible with raw dashboards. SRE teams end up reacting to every alert with equal urgency.</p>
+        <p>The SAAFE engine scores every service across five risk dimensions — Security, Availability, Anomaly, Failure, and Events — producing a real-time risk leaderboard that tells you exactly where to focus.</p>
+        <div class="benefits-grid">
+          <div class="benefit-item"><span class="benefit-icon">🏆</span><div><h4>Risk Leaderboard</h4><p>Top-10 riskiest services ranked by composite SAAFE score.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🔄</span><div><h4>5-Minute Refresh</h4><p>Scores recalculated every 5 minutes from live signal data.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">📏</span><div><h4>Multi-Dimension</h4><p>Five independent risk axes give a complete 360° health picture.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🎯</span><div><h4>Team Attribution</h4><p>Risk scores attributed to owning team for accountability dashboards.</p></div></div>
+        </div>
+        <div class="how-it-works">
+          <h4>SAAFE Score Dimensions</h4>
+          <div class="mockup-saafe" style="margin-top:1rem">
+            <div class="saafe-card" style="background:rgba(224,47,68,0.06);border-color:rgba(224,47,68,0.3)"><h4 style="color:#E02F44">🔒 Security</h4><p style="color:var(--text-muted)">CVE exposure, RBAC misconfig, TLS certificate age</p></div>
+            <div class="saafe-card" style="background:rgba(24,144,255,0.06);border-color:rgba(24,144,255,0.3)"><h4 style="color:var(--info)">⏱ Availability</h4><p style="color:var(--text-muted)">Uptime, error rate, SLO compliance window</p></div>
+            <div class="saafe-card" style="background:rgba(250,173,20,0.06);border-color:rgba(250,173,20,0.3)"><h4 style="color:var(--warning)">📈 Anomaly</h4><p style="color:var(--text-muted)">Z-score deviation from baseline across all metrics</p></div>
+            <div class="saafe-card" style="background:rgba(115,191,105,0.06);border-color:rgba(115,191,105,0.3)"><h4 style="color:var(--grafana-green)">💥 Failure</h4><p style="color:var(--text-muted)">Pod restarts, OOMKilled events, crash loops</p></div>
+            <div class="saafe-card" style="background:rgba(255,119,51,0.06);border-color:rgba(255,119,51,0.3);grid-column:1/-1"><h4 style="color:var(--grafana-orange)">📋 Events</h4><p style="color:var(--text-muted)">Recent deployments, config changes, scaling events that correlate with risk</p></div>
+          </div>
+        </div>
+        <div class="tech-stack">
+          <div class="tech-pill">Mimir<span class="tech-tooltip">Real-time metric queries for SAAFE scoring</span></div>
+          <div class="tech-pill">Loki<span class="tech-tooltip">Log-based failure event detection</span></div>
+          <div class="tech-pill">Kubernetes API<span class="tech-tooltip">Pod events, restarts, OOM data</span></div>
+          <div class="tech-pill">PostgreSQL<span class="tech-tooltip">Score history and trend storage</span></div>
+          <div class="tech-pill">Grafana Dashboard<span class="tech-tooltip">Risk leaderboard and drill-down panels</span></div>
+        </div>
+        <a href="#slo-framework" class="module-next">Next: Enterprise SLO Framework →</a>
+      </div>
+      <div class="reveal">
+        <div class="mockup-terminal" role="img" aria-label="SAAFE service risk leaderboard">
+          <div class="terminal-header">
+            <div class="terminal-dot terminal-dot-red"></div>
+            <div class="terminal-dot terminal-dot-yellow"></div>
+            <div class="terminal-dot terminal-dot-green"></div>
+            <span class="terminal-title">SAAFE Risk Leaderboard · 5-min refresh</span>
+          </div>
+          <div class="terminal-body">
+            <table style="width:100%;font-size:0.78rem;border-collapse:collapse">
+              <thead><tr style="color:var(--text-muted)"><th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.7rem;letter-spacing:0.06em">SERVICE</th><th style="padding:0.3rem 0.4rem;font-size:0.7rem">SEC</th><th style="padding:0.3rem 0.4rem;font-size:0.7rem">AVAIL</th><th style="padding:0.3rem 0.4rem;font-size:0.7rem">ANOM</th><th style="padding:0.3rem 0.4rem;font-size:0.7rem">FAIL</th><th style="padding:0.3rem 0.4rem;font-size:0.7rem">EVT</th><th style="padding:0.3rem 0.4rem;font-size:0.7rem">SCORE</th></tr></thead>
+              <tbody>
+                <tr style="background:rgba(224,47,68,0.08);border-left:3px solid #E02F44"><td style="padding:0.4rem 0.5rem;color:var(--text-primary);font-weight:600">payment-svc</td><td style="text-align:center">🔴</td><td style="text-align:center">🔴</td><td style="text-align:center">🔴</td><td style="text-align:center">🟠</td><td style="text-align:center">🔴</td><td style="text-align:center;color:#E02F44;font-weight:700">94</td></tr>
+                <tr style="background:rgba(250,173,20,0.06);border-left:3px solid #FAAD14"><td style="padding:0.4rem 0.5rem;color:var(--text-primary);font-weight:600">checkout-api</td><td style="text-align:center">🟡</td><td style="text-align:center">🔴</td><td style="text-align:center">🟠</td><td style="text-align:center">🟡</td><td style="text-align:center">🟠</td><td style="text-align:center;color:#FAAD14;font-weight:700">78</td></tr>
+                <tr style="background:rgba(255,119,51,0.05);border-left:3px solid #FF7733"><td style="padding:0.4rem 0.5rem;color:var(--text-primary);font-weight:600">inventory-svc</td><td style="text-align:center">🟢</td><td style="text-align:center">🟠</td><td style="text-align:center">🟡</td><td style="text-align:center">🟠</td><td style="text-align:center">🟡</td><td style="text-align:center;color:#FF7733;font-weight:700">62</td></tr>
+                <tr><td style="padding:0.4rem 0.5rem;color:var(--text-secondary)">auth-service</td><td style="text-align:center">🟢</td><td style="text-align:center">🟢</td><td style="text-align:center">🟡</td><td style="text-align:center">🟢</td><td style="text-align:center">🟢</td><td style="text-align:center;color:var(--grafana-green);font-weight:700">21</td></tr>
+                <tr><td style="padding:0.4rem 0.5rem;color:var(--text-secondary)">product-catalog</td><td style="text-align:center">🟢</td><td style="text-align:center">🟢</td><td style="text-align:center">🟢</td><td style="text-align:center">🟢</td><td style="text-align:center">🟢</td><td style="text-align:center;color:var(--grafana-green);font-weight:700">8</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="terminal-footer"><span style="background:var(--success);width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>128 services scored · 2 critical · 1 high · refreshed 2m ago <span class="blink">▋</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MODULE 6: ENTERPRISE SLO FRAMEWORK
+     ============================================================ -->
+<section class="module-section" id="slo-framework" aria-labelledby="slo-heading">
+  <div class="container">
+    <div class="module-grid-2 reverse">
+      <div class="module-story reveal">
+        <div class="module-number">Module 06 / 06</div>
+        <div class="section-label">📊 Enterprise SLO Framework</div>
+        <h2 id="slo-heading">A Unified Reliability Language<br><span class="text-orange">Across Every Service</span></h2>
+        <p>Without a standard SLO framework, every team defines reliability differently. "99% uptime" means something different to every engineer — and error budget conversations never happen because nobody tracks burn rates.</p>
+        <p>Built on Google SRE principles, this framework provides a unified standard for defining SLIs, setting SLOs, calculating error budgets, and tracking burn rates — across every service and team in the organization.</p>
+        <div class="benefits-grid">
+          <div class="benefit-item"><span class="benefit-icon">📐</span><div><h4>Standardized SLIs</h4><p>Canonical SLI templates for latency, availability, throughput, and quality.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">💰</span><div><h4>Error Budget Tracking</h4><p>Real-time error budget consumption with burn rate alerts.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🤝</span><div><h4>Shared Language</h4><p>Eng, Product, and Leadership aligned on the same reliability vocabulary.</p></div></div>
+          <div class="benefit-item"><span class="benefit-icon">🔔</span><div><h4>Multi-Window Burn Rate</h4><p>1h + 6h burn rate alerts prevent silent budget exhaustion.</p></div></div>
+        </div>
+        <div class="how-it-works">
+          <h4>SLO Lifecycle</h4>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Define SLIs</strong><span>Select canonical SLI type (availability, latency, saturation) and Mimir PromQL expression.</span></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Set SLO Targets</strong><span>Set target (e.g. 99.9%) and rolling window (28-day, monthly, quarterly).</span></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Auto-Generate Alerts</strong><span>Framework auto-creates multi-window burn rate recording rules and alert rules.</span></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Dashboard &amp; Review</strong><span>Grafana SLO dashboard with error budget gauge, burn rate chart, and incident impact.</span></div></div>
+          </div>
+        </div>
+        <div class="tech-stack">
+          <div class="tech-pill">Mimir Recording Rules<span class="tech-tooltip">Pre-computed SLI aggregations</span></div>
+          <div class="tech-pill">Grafana SLO Plugin<span class="tech-tooltip">Native SLO dashboard integration</span></div>
+          <div class="tech-pill">Alertmanager<span class="tech-tooltip">Multi-window burn rate alert routing</span></div>
+          <div class="tech-pill">YAML-as-Code<span class="tech-tooltip">SLO definitions stored in Git</span></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="mockup-slo" role="img" aria-label="SLO framework table">
+          <table class="slo-table">
+            <thead><tr><th>Service</th><th>SLI Type</th><th>Target</th><th>28-Day</th><th>Budget Left</th><th>Burn</th></tr></thead>
+            <tbody>
+              <tr><td style="color:var(--text-primary);font-weight:600">checkout-api</td><td>Availability</td><td>99.9%</td><td><span style="color:var(--grafana-red)">99.61%</span></td><td><span class="badge badge-red">12%</span></td><td style="color:var(--grafana-red)">3.2x</td></tr>
+              <tr><td style="color:var(--text-primary);font-weight:600">search-api</td><td>Latency P99</td><td>99.5%</td><td><span style="color:var(--warning)">99.3%</span></td><td><span class="badge badge-warning">44%</span></td><td style="color:var(--warning)">1.4x</td></tr>
+              <tr><td style="color:var(--text-primary);font-weight:600">auth-service</td><td>Availability</td><td>99.95%</td><td><span style="color:var(--grafana-green)">99.97%</span></td><td><span class="badge badge-success">100%</span></td><td style="color:var(--grafana-green)">0.3x</td></tr>
+              <tr><td style="color:var(--text-primary);font-weight:600">inventory-svc</td><td>Throughput</td><td>99.0%</td><td><span style="color:var(--grafana-green)">99.4%</span></td><td><span class="badge badge-success">68%</span></td><td style="color:var(--grafana-green)">0.7x</td></tr>
+              <tr><td style="color:var(--text-primary);font-weight:600">payment-svc</td><td>Availability</td><td>99.99%</td><td><span style="color:var(--grafana-red)">99.91%</span></td><td><span class="badge badge-red">2%</span></td><td style="color:var(--grafana-red)">8.1x</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="slo-concepts" style="margin-top:1.5rem">
+          <div class="concept-card"><h4>SLI</h4><p>Service Level Indicator — the measured ratio of good events to total events.</p></div>
+          <div class="concept-card"><h4>SLO</h4><p>Service Level Objective — the target percentage of time the SLI must be met.</p></div>
+          <div class="concept-card"><h4>Error Budget</h4><p>The allowed failure budget = 1 − SLO. When exhausted, freeze feature work.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PLATFORM IMPACT
+     ============================================================ -->
+<section class="impact" id="impact" aria-labelledby="impact-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">💡 Platform Impact</div>
+      <h2 id="impact-heading">Measured Results Across<br>Every Engineering Team</h2>
+      <p>Six months of production data from organizations running the full AIOps Intelligence Hub stack.</p>
+    </div>
+    <div class="impact-stats stagger" role="region" aria-label="Platform impact metrics">
+      <div class="impact-stat"><div class="impact-stat-number" data-count="90" data-suffix="%">0%</div><div class="impact-stat-label">Alert Noise Reduction</div></div>
+      <div class="impact-stat"><div class="impact-stat-number" data-count="78" data-suffix="%">0%</div><div class="impact-stat-label">Faster Mean Time to Resolution</div></div>
+      <div class="impact-stat"><div class="impact-stat-number" data-count="4" data-suffix="x">0x</div><div class="impact-stat-label">Fewer Incident Escalations</div></div>
+      <div class="impact-stat"><div class="impact-stat-number" data-count="99.9" data-suffix="%">0%</div><div class="impact-stat-label">SLO Coverage Achieved</div></div>
+    </div>
+    <div class="timeline-wrap reveal">
+      <div class="timeline-label">Platform Rollout Timeline</div>
+      <div class="timeline-track">
+        <div class="timeline-item"><div class="timeline-dot">1</div><div class="timeline-year">Month 1</div><div class="timeline-desc">SLO Framework deployed across all critical services</div></div>
+        <div class="timeline-item"><div class="timeline-dot">2</div><div class="timeline-year">Month 2</div><div class="timeline-desc">Alert Clustering live — 87% noise reduction achieved</div></div>
+        <div class="timeline-item"><div class="timeline-dot">3</div><div class="timeline-year">Month 3</div><div class="timeline-desc">RCA Hub and Service Insights dashboards GA</div></div>
+        <div class="timeline-item"><div class="timeline-dot">4</div><div class="timeline-year">Month 4</div><div class="timeline-desc">Flamegraph AI and Forecasting modules in production</div></div>
+        <div class="timeline-item"><div class="timeline-dot">5</div><div class="timeline-year">Month 6</div><div class="timeline-desc">Full platform — MTTR reduced by 78% org-wide</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ARCHITECTURE
+     ============================================================ -->
+<section class="architecture" id="architecture" aria-labelledby="arch-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">🏗️ Architecture</div>
+      <h2 id="arch-heading">Built on the Grafana Stack.<br>Extended with AI Intelligence.</h2>
+      <p>Every component is production-grade, cloud-native, and integrates natively with the Grafana observability ecosystem.</p>
+    </div>
+    <div class="arch-diagram reveal">
+      <div class="arch-layer" style="background:linear-gradient(135deg,rgba(255,119,51,0.08),var(--glass-bg))">
+        <div class="arch-layer-label">🖥 User Interfaces</div>
+        <div class="arch-items"><div class="arch-item orange">Grafana Dashboards</div><div class="arch-item orange">React Web App</div><div class="arch-item orange">Grafana Plugin Panels</div><div class="arch-item orange">API / Webhook</div></div>
+      </div>
+      <div class="arch-arrow" aria-hidden="true">↕</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">🧠 AI &amp; Agent Layer</div>
+        <div class="arch-items"><div class="arch-item blue">GPT-4o / GPT-4.1</div><div class="arch-item blue">LangGraph Agents</div><div class="arch-item blue">RAPTOR RAG</div><div class="arch-item blue">Prophet Forecasting</div><div class="arch-item blue">HDBSCAN Clustering</div><div class="arch-item blue">Embedding Pipeline</div></div>
+      </div>
+      <div class="arch-arrow" aria-hidden="true">↕</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">⚙️ Backend Services</div>
+        <div class="arch-items"><div class="arch-item">FastAPI</div><div class="arch-item">Celery Workers</div><div class="arch-item">Alert Correlator</div><div class="arch-item">SAAFE Scorer</div><div class="arch-item">WebSocket Stream</div><div class="arch-item">MCP Tool Layer</div></div>
+      </div>
+      <div class="arch-arrow" aria-hidden="true">↕</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">📡 Observability Stack</div>
+        <div class="arch-items"><div class="arch-item">Grafana Enterprise</div><div class="arch-item">Mimir (Metrics)</div><div class="arch-item">Loki (Logs)</div><div class="arch-item">Tempo (Traces)</div><div class="arch-item">Pyroscope (Profiles)</div><div class="arch-item">Faro (RUM)</div><div class="arch-item">Alertmanager</div></div>
+      </div>
+      <div class="arch-arrow" aria-hidden="true">↕</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">🗄 Data &amp; Storage</div>
+        <div class="arch-items"><div class="arch-item">PostgreSQL 16</div><div class="arch-item">Redis 7</div><div class="arch-item">ChromaDB</div><div class="arch-item">Object Storage (S3/GCS)</div></div>
+      </div>
+      <div class="arch-arrow" aria-hidden="true">↕</div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">☁️ Infrastructure</div>
+        <div class="arch-items"><div class="arch-item">Kubernetes (AKS/GKE)</div><div class="arch-item">Helm Charts</div><div class="arch-item">Docker Compose (Dev)</div><div class="arch-item">GitHub Actions CI/CD</div><div class="arch-item">Nginx Ingress</div></div>
+      </div>
+    </div>
+    <div class="arch-users stagger" style="margin-top:3rem" role="list">
+      <div class="arch-user" role="listitem"><span>👷</span>On-Call SREs</div>
+      <div class="arch-user" role="listitem"><span>💻</span>Platform Engineers</div>
+      <div class="arch-user" role="listitem"><span>👔</span>Engineering Managers</div>
+      <div class="arch-user" role="listitem"><span>🔬</span>Reliability Analysts</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TECH STACK
+     ============================================================ -->
+<section class="tech-section" id="tech-stack" aria-labelledby="tech-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">🔧 Technology Stack</div>
+      <h2 id="tech-heading">Best-in-Class Tools,<br>Deeply Integrated</h2>
+      <p>Every technology chosen for production-grade reliability and deep compatibility with the Grafana ecosystem.</p>
+    </div>
+    <div class="reveal" style="margin-top:3rem">
+      <p class="text-muted" style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:1rem">Observability</p>
+      <div class="tech-row">
+        <div class="tech-stack-pill">Grafana Enterprise<span class="tech-tooltip">Dashboards, alerting, and annotation management</span></div>
+        <div class="tech-stack-pill">Mimir<span class="tech-tooltip">Prometheus-compatible long-term metrics store</span></div>
+        <div class="tech-stack-pill">Loki<span class="tech-tooltip">Log aggregation with LogQL</span></div>
+        <div class="tech-stack-pill">Tempo<span class="tech-tooltip">Distributed tracing with TraceQL</span></div>
+        <div class="tech-stack-pill">Pyroscope<span class="tech-tooltip">Continuous CPU and memory profiling</span></div>
+        <div class="tech-stack-pill">Faro<span class="tech-tooltip">Real User Monitoring and Web Vitals</span></div>
+        <div class="tech-stack-pill">Alertmanager<span class="tech-tooltip">Alert routing and notification management</span></div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:1.5rem">
+      <p class="text-muted" style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:1rem">AI &amp; ML</p>
+      <div class="tech-row">
+        <div class="tech-stack-pill">GPT-4o / GPT-4.1<span class="tech-tooltip">Primary LLM for RCA synthesis and flamegraph analysis</span></div>
+        <div class="tech-stack-pill">OpenAI Embeddings<span class="tech-tooltip">text-embedding-3-large for semantic clustering</span></div>
+        <div class="tech-stack-pill">LangGraph<span class="tech-tooltip">Multi-agent orchestration with stateful workflows</span></div>
+        <div class="tech-stack-pill">Meta Prophet<span class="tech-tooltip">Time-series forecasting with seasonality modeling</span></div>
+        <div class="tech-stack-pill">HDBSCAN<span class="tech-tooltip">Density-based hierarchical clustering for alert grouping</span></div>
+        <div class="tech-stack-pill">scikit-learn<span class="tech-tooltip">Z-score anomaly detection and baseline models</span></div>
+        <div class="tech-stack-pill">ChromaDB<span class="tech-tooltip">Vector store for RAPTOR knowledge base</span></div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:1.5rem">
+      <p class="text-muted" style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:1rem">Backend</p>
+      <div class="tech-row">
+        <div class="tech-stack-pill">Python 3.11+<span class="tech-tooltip">Primary backend language</span></div>
+        <div class="tech-stack-pill">FastAPI<span class="tech-tooltip">Async REST API and WebSocket server</span></div>
+        <div class="tech-stack-pill">SQLAlchemy 2.0<span class="tech-tooltip">Async ORM with asyncpg driver</span></div>
+        <div class="tech-stack-pill">PostgreSQL 16<span class="tech-tooltip">Primary relational database</span></div>
+        <div class="tech-stack-pill">Redis 7<span class="tech-tooltip">Caching, pub/sub, and rate limiting</span></div>
+        <div class="tech-stack-pill">Celery<span class="tech-tooltip">Async task queue for ML model training</span></div>
+        <div class="tech-stack-pill">Pydantic v2<span class="tech-tooltip">Data validation and settings management</span></div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:1.5rem">
+      <p class="text-muted" style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:1rem">Frontend &amp; Infra</p>
+      <div class="tech-row">
+        <div class="tech-stack-pill">React 18 + TypeScript<span class="tech-tooltip">Primary UI framework with strict type safety</span></div>
+        <div class="tech-stack-pill">Vite 5<span class="tech-tooltip">Sub-second HMR development build tool</span></div>
+        <div class="tech-stack-pill">Tailwind CSS<span class="tech-tooltip">Utility-first design system</span></div>
+        <div class="tech-stack-pill">D3.js<span class="tech-tooltip">Flame graphs and service dependency maps</span></div>
+        <div class="tech-stack-pill">Recharts<span class="tech-tooltip">Metrics time-series visualizations</span></div>
+        <div class="tech-stack-pill">Kubernetes<span class="tech-tooltip">Production container orchestration</span></div>
+        <div class="tech-stack-pill">GitHub Actions<span class="tech-tooltip">CI/CD pipeline automation</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FAQ
+     ============================================================ -->
+<section class="faq" id="faq" aria-labelledby="faq-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">❓ FAQ</div>
+      <h2 id="faq-heading">Frequently Asked Questions</h2>
+      <p>Everything engineering and leadership need to know before deploying the platform.</p>
+    </div>
+    <div class="faq-list" role="list">
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the platform write anything to Grafana, Mimir, Loki, or Kubernetes?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>No. The AIOps Intelligence Hub is strictly read-only. All tools query APIs for data — they never write, modify, scale, restart, or delete resources. The only writes are to the platform's own PostgreSQL database (incidents, investigations, scores) and Grafana annotations, which are cosmetic only.</p></div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does any production data leave our infrastructure?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Only for AI analysis. Alert names, metric values, log snippets, and flame graph summaries are sent to the OpenAI API for embedding and LLM analysis. Full log lines and raw trace data are never sent — only curated, summarized payloads. Configure Azure OpenAI (your own tenant) to keep data within your cloud boundary.</p></div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How long does a full RCA investigation take?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Typically 45–90 seconds for a full investigation across all signal sources (metrics, logs, traces, profiles, and frontend). The planner agent queries all signals in parallel, and the synthesizer generates the RCA narrative once all findings are available. Results stream in real time via WebSocket so you see partial findings within 10 seconds.</p></div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">What is the minimum infrastructure needed to run this?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>The backend requires 2 vCPUs / 4 GB RAM minimum (4 vCPUs / 8 GB recommended for production). You need an existing Grafana stack (Mimir, Loki, and Tempo at minimum), a PostgreSQL 16 instance, and a Redis 7 instance. ChromaDB is optional — required only for the RAPTOR knowledge base feature.</p></div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Can the Alert Clustering engine handle bursty alert storms?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Yes. The clustering engine uses Redis Streams as a buffer, absorbing bursts of thousands of alerts without dropping events. The streaming HDBSCAN implementation processes alerts in micro-batches with a configurable flush interval (default 500ms). In load tests, the engine sustained 10,000 alerts/minute while maintaining &lt;1s clustering latency.</p></div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">How is the SAAFE score calculated?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>The SAAFE composite score is a weighted sum of five normalized sub-scores (0–100 each): Security (CVE exposure + TLS age), Availability (error rate + SLO compliance), Anomaly (Z-score magnitude across key metrics), Failure (pod restarts + OOMKilled count), and Events (recent deployment risk). Weights are configurable per team. The composite score updates every 5 minutes.</p></div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" role="button" tabindex="0" aria-expanded="false">Does the platform support multiple Kubernetes clusters?<span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Yes. The platform is multi-cluster aware through Mimir's and Loki's tenant/cluster label selectors. Each cluster is identified by a <code>cluster</code> label, and all queries, SAAFE scores, and SLO dashboards can be filtered or aggregated by cluster. The service topology graph supports cross-cluster service edges via Tempo distributed tracing data.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA SECTION
+     ============================================================ -->
+<section class="cta-section" aria-labelledby="cta-heading">
+  <div class="container">
+    <div class="section-label" style="justify-content:center">🚀 Get Started</div>
+    <h2 id="cta-heading">Deploy Intelligence Into<br>Your Observability Stack</h2>
+    <p>The AIOps Intelligence Hub is self-hosted and designed to plug into any existing Grafana deployment in under an hour.</p>
+    <div class="cta-btns">
+      <a href="#overview" class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2rem">Explore All Modules →</a>
+      <a href="#architecture" class="btn btn-secondary" style="font-size:1rem;padding:0.9rem 2rem">View Architecture</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer role="contentinfo">
+  <div class="footer-gradient-line" aria-hidden="true"></div>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">
+          <div class="nav-logo-icon" aria-hidden="true">🔶</div>
+          <div><div class="footer-brand">AIOps Intelligence Hub</div></div>
+        </div>
+        <p class="footer-tagline">Six AI-powered capabilities that transform signal noise into clear, actionable insight — built on the Grafana observability stack.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Modules</h4>
+        <a href="#alert-clustering">Alert Clustering</a>
+        <a href="#flamegraph-ai">Flamegraph AI</a>
+        <a href="#forecasting">Metrics Forecast</a>
+        <a href="#rca-hub">RCA Hub</a>
+        <a href="#service-insights">Service Insights</a>
+        <a href="#slo-framework">SLO Framework</a>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#tech-stack">Tech Stack</a>
+        <a href="#impact">Platform Impact</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <h4>Stack</h4>
+        <a href="https://grafana.com" target="_blank" rel="noopener">Grafana</a>
+        <a href="https://grafana.com/oss/mimir/" target="_blank" rel="noopener">Mimir</a>
+        <a href="https://grafana.com/oss/loki/" target="_blank" rel="noopener">Loki</a>
+        <a href="https://grafana.com/oss/tempo/" target="_blank" rel="noopener">Tempo</a>
+        <a href="https://grafana.com/oss/pyroscope/" target="_blank" rel="noopener">Pyroscope</a>
+        <a href="https://openai.com" target="_blank" rel="noopener">OpenAI</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2025 AIOps Intelligence Hub — Enterprise Observability Platform.</p>
+      <p class="footer-copy">Grafana, Mimir, Loki, Tempo, Pyroscope are trademarks of Grafana Labs.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- Back to Top -->
+<button id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+(function(){
+'use strict';
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ══════════════════════════════════════════════════════════
+   1. CUSTOM CURSOR
+   ══════════════════════════════════════════════════════════ */
+const dot = document.getElementById('cursor-dot');
+const ring = document.getElementById('cursor-ring');
+if(dot && ring){
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    dot.style.left=mx+'px'; dot.style.top=my+'px';
+  },{passive:true});
+  function animRing(){
+    rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. NEURAL NETWORK CANVAS (hero background)
+   ══════════════════════════════════════════════════════════ */
+const canvas = document.getElementById('hero-canvas');
+if(canvas && !reduced){
+  const ctx = canvas.getContext('2d');
+  let W,H,nodes=[];
+  const N=70,CONN_DIST=160;
+  function resize(){
+    W=canvas.width=canvas.offsetWidth;
+    H=canvas.height=canvas.offsetHeight;
+  }
+  function createNodes(){
+    nodes=[];
+    for(let i=0;i<N;i++) nodes.push({
+      x:Math.random()*W, y:Math.random()*H,
+      vx:(Math.random()-0.5)*0.4, vy:(Math.random()-0.5)*0.4,
+      r:Math.random()*2+1,
+      pulse:Math.random()*Math.PI*2
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const t=performance.now()/1000;
+    // Draw connections
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<CONN_DIST){
+          const alpha=(1-dist/CONN_DIST)*0.35;
+          const pulse=Math.sin(t*1.5+nodes[i].pulse)*0.5+0.5;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x,nodes[i].y);
+          ctx.lineTo(nodes[j].x,nodes[j].y);
+          ctx.strokeStyle=`rgba(255,107,53,${alpha*pulse})`;
+          ctx.lineWidth=0.8;
+          ctx.stroke();
+        }
+      }
+    }
+    // Draw nodes
+    nodes.forEach(n=>{
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<0||n.x>W) n.vx*=-1;
+      if(n.y<0||n.y>H) n.vy*=-1;
+      n.pulse+=0.02;
+      const glow=Math.sin(n.pulse)*0.5+0.5;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,107,53,${0.4+glow*0.5})`;
+      ctx.fill();
+      // glow ring
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r*3,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,107,53,${0.04*glow})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();
+  createNodes();
+  draw();
+  window.addEventListener('resize',()=>{ resize(); createNodes(); },{passive:true});
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. TYPEWRITER HERO HEADLINE
+   ══════════════════════════════════════════════════════════ */
+const twEl = document.getElementById('typewriter-text');
+if(twEl){
+  const lines=['The Future of Enterprise\nObservability is Intelligent'];
+  let charIdx=0, lineIdx=0;
+  function type(){
+    const full=lines[lineIdx];
+    if(charIdx<=full.length){
+      twEl.innerHTML=full.slice(0,charIdx).replace('\n','<br>');
+      charIdx++;
+      setTimeout(type, charIdx===1?600:38);
+    }
+  }
+  setTimeout(type,400);
+}
+
+/* ══════════════════════════════════════════════════════════
+   4. SCROLL PROGRESS BAR
+   ══════════════════════════════════════════════════════════ */
+const progressBar = document.getElementById('progress-bar');
+function updateProgress() {
+  const docH = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = docH > 0 ? (window.scrollY / docH) * 100 : 0;
+  progressBar.style.width = pct + '%';
+  progressBar.setAttribute('aria-valuenow', Math.round(pct));
+}
+
+/* ── Header scroll state ── */
+const header = document.getElementById('site-header');
+function updateHeader() { header.classList.toggle('scrolled', window.scrollY > 20); }
+
+/* ── Back to top ── */
+const btt = document.getElementById('back-to-top');
+function updateBTT() { btt.classList.toggle('visible', window.scrollY > 400); }
+btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+/* ── Throttled scroll handler ── */
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => { updateProgress(); updateHeader(); updateBTT(); updateActiveNav(); ticking = false; });
+    ticking = true;
+  }
+}, { passive: true });
+
+/* ── Smooth scroll for module cards ── */
+const _nativeScrollTo = window.scrollTo.bind(window);
+window.scrollTo = function(idOrOptions, y) {
+  if (typeof idOrOptions === 'string') {
+    const el = document.getElementById(idOrOptions);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  }
+  _nativeScrollTo(idOrOptions, y);
+};
+
+/* ── Active nav link ── */
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(sec => { if (window.scrollY >= sec.offsetTop - 120) current = sec.id; });
+  navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+}
+
+/* ── Smooth scroll for all anchor links ── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+
+/* ── Mobile nav drawer ── */
+const hamburger = document.getElementById('hamburger-btn');
+const navDrawer = document.getElementById('nav-drawer');
+const navOverlay = document.getElementById('nav-overlay');
+const navClose = document.getElementById('nav-close');
+function openDrawer() { navDrawer.classList.add('open'); navOverlay.classList.add('open'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+function closeDrawer() { navDrawer.classList.remove('open'); navOverlay.classList.remove('open'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+hamburger.addEventListener('click', openDrawer);
+navClose.addEventListener('click', closeDrawer);
+navOverlay.addEventListener('click', closeDrawer);
+navDrawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+/* ── Scroll reveal ── */
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObs.unobserve(entry.target); } });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal, .stagger').forEach(el => revealObs.observe(el));
+
+/* ── Counter animation ── */
+function animateCounter(el) {
+  const target = parseFloat(el.dataset.count);
+  const suffix = el.dataset.suffix || '';
+  const prefix = el.dataset.prefix || '';
+  const decimals = target % 1 !== 0 ? 1 : 0;
+  const duration = 1800;
+  const start = performance.now();
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = prefix + (target * eased).toFixed(decimals) + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { animateCounter(entry.target); counterObs.unobserve(entry.target); } });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count]').forEach(el => counterObs.observe(el));
+
+/* ── FAQ accordion ── */
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-q').setAttribute('aria-expanded','false'); });
+    if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  });
+  btn.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); btn.click(); } });
+});
+
+/* ══════════════════════════════════════════════════════════
+   5. COMMAND PALETTE
+   ══════════════════════════════════════════════════════════ */
+const overlay = document.getElementById('cmd-overlay');
+const cmdInput = document.getElementById('cmd-search-input');
+const cmdResults = document.getElementById('cmd-results');
+const allCmdItems = cmdResults ? Array.from(cmdResults.querySelectorAll('.cmd-item')) : [];
+let focusedIdx = -1;
+
+function openCmd(){
+  overlay.classList.add('open');
+  cmdInput.value=''; cmdInput.focus();
+  filterCmd(''); focusedIdx=-1;
+}
+function closeCmd(){
+  overlay.classList.remove('open');
+  focusedIdx=-1;
+}
+function filterCmd(q){
+  const terms=q.toLowerCase().trim().split(' ');
+  allCmdItems.forEach(item=>{
+    const text=(item.dataset.cmd||item.textContent).toLowerCase();
+    const match=terms.every(t=>text.includes(t));
+    item.style.display=match?'flex':'none';
+  });
+}
+function moveFocus(dir){
+  const visible=allCmdItems.filter(i=>i.style.display!=='none');
+  if(!visible.length) return;
+  visible.forEach(i=>i.classList.remove('focused'));
+  focusedIdx=Math.max(0,Math.min(focusedIdx+dir,visible.length-1));
+  visible[focusedIdx].classList.add('focused');
+  visible[focusedIdx].scrollIntoView({block:'nearest'});
+}
+
+if(overlay){
+  cmdInput.addEventListener('input',()=>{ filterCmd(cmdInput.value); focusedIdx=-1; });
+  overlay.addEventListener('click',e=>{ if(e.target===overlay) closeCmd(); });
+  allCmdItems.forEach(item=>item.addEventListener('click',closeCmd));
+}
+document.getElementById('open-cmd-btn')?.addEventListener('click',openCmd);
+
+/* ── Keyboard: Cmd+K open palette, arrow/enter navigate ── */
+document.addEventListener('keydown', e => {
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); overlay?.classList.contains('open')?closeCmd():openCmd(); return; }
+  if(!overlay?.classList.contains('open')) return;
+  if(e.key==='Escape') closeCmd();
+  if(e.key==='ArrowDown'){ e.preventDefault(); moveFocus(1); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); moveFocus(-1); }
+  if(e.key==='Enter'){
+    const visible=allCmdItems.filter(i=>i.style.display!=='none');
+    if(focusedIdx>=0 && visible[focusedIdx]){ visible[focusedIdx].click(); closeCmd(); }
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   6. 3D CARD TILT
+   ══════════════════════════════════════════════════════════ */
+if(!reduced){
+  document.querySelectorAll('.module-card').forEach(card=>{
+    // add spotlight div
+    const spot = document.createElement('div');
+    spot.className='spotlight';
+    card.appendChild(spot);
+
+    card.addEventListener('mousemove',e=>{
+      const r=card.getBoundingClientRect();
+      const x=(e.clientX-r.left)/r.width-0.5;
+      const y=(e.clientY-r.top)/r.height-0.5;
+      card.style.transform=`perspective(600px) rotateY(${x*14}deg) rotateX(${-y*10}deg) scale3d(1.03,1.03,1.03)`;
+      spot.style.left=(e.clientX-r.left)+'px';
+      spot.style.top=(e.clientY-r.top)+'px';
+      // magnetic button effect
+      card.style.setProperty('--mx',(e.clientX-r.left)/r.width*100+'%');
+      card.style.setProperty('--my',(e.clientY-r.top)/r.height*100+'%');
+    });
+    card.addEventListener('mouseleave',()=>{
+      card.style.transform='perspective(600px) rotateY(0) rotateX(0) scale3d(1,1,1)';
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   7. MAGNETIC BUTTONS
+   ══════════════════════════════════════════════════════════ */
+if(!reduced){
+  document.querySelectorAll('.btn-primary,.btn-secondary').forEach(btn=>{
+    btn.addEventListener('mousemove',e=>{
+      const r=btn.getBoundingClientRect();
+      const x=e.clientX-r.left-r.width/2;
+      const y=e.clientY-r.top-r.height/2;
+      btn.style.transform=`translate(${x*0.2}px,${y*0.2}px) scale(1.04)`;
+      btn.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+      btn.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+    });
+    btn.addEventListener('mouseleave',()=>{ btn.style.transform=''; });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   8. LIVE DATA SIMULATION (terminal values update)
+   ══════════════════════════════════════════════════════════ */
+function rand(min,max){ return (Math.random()*(max-min)+min).toFixed(1); }
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1)+min); }
+
+// Live alert count in hero
+const liveAlert=document.getElementById('live-alert-count');
+if(liveAlert){ setInterval(()=>{ liveAlert.textContent=randInt(2,6); },4000); }
+
+/* ══════════════════════════════════════════════════════════
+   9. HERO PARTICLES
+   ══════════════════════════════════════════════════════════ */
+const container = document.getElementById('hero-particles');
+if(container && !reduced){
+  for(let i=0;i<24;i++){
+    const span=document.createElement('span');
+    span.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${(Math.random()*6).toFixed(1)}s;--dur:${(6+Math.random()*10).toFixed(1)}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;opacity:${(0.3+Math.random()*0.5).toFixed(2)}`;
+    container.appendChild(span);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   10. SEARCH FILTER (nav bar)
+   ══════════════════════════════════════════════════════════ */
+const searchInput = document.getElementById('search-input');
+if(searchInput){
+  const cards=document.querySelectorAll('.module-card');
+  searchInput.addEventListener('input',()=>{
+    const q=searchInput.value.toLowerCase().trim();
+    cards.forEach(c=>{ c.style.opacity=(!q||c.textContent.toLowerCase().includes(q))?'':'0.2';
+      c.style.transform=(!q||c.textContent.toLowerCase().includes(q))?'':'scale(0.97)';
+    });
+  });
+}
+
+/* ── Init ── */
+updateHeader(); updateBTT(); updateProgress();
+})();
+</script>
+</body>
+</html>
