@@ -418,6 +418,118 @@ header.scrolled{background:rgba(17,18,23,0.92);backdrop-filter:blur(24px);box-sh
 .arch-user span{display:block;font-size:1.4rem;margin-bottom:0.4rem}
 
 /* ============================================================
+   16b. REQUEST FLOW SECTION
+   ============================================================ */
+.flow-section{background:var(--dark-bg);padding:6rem 0;position:relative;overflow:hidden}
+.flow-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(255,119,51,0.06),transparent 70%);pointer-events:none;z-index:0}
+/* All children above the bg overlay */
+.flow-section .section-header,
+.flow-section .flow-diagram{position:relative;z-index:1}
+
+/* Vertical connector — enough height so the ▼ never bleeds into the card below */
+.flow-connector{display:flex;justify-content:center;padding:0.6rem 0}
+.flow-connector-line{
+  width:2px;height:32px;
+  background:linear-gradient(to bottom,rgba(255,119,51,.5),rgba(255,119,51,.2));
+  position:relative;margin-bottom:14px          /* room for the ▼ glyph */
+}
+.flow-connector-line::after{
+  content:'▼';position:absolute;
+  top:100%;margin-top:2px;                      /* below the line, not overlapping */
+  left:50%;transform:translateX(-50%);
+  font-size:9px;line-height:1;color:rgba(255,119,51,.55);
+}
+
+/* Step rows */
+.flow-step-row{display:flex;justify-content:center;gap:16px;width:100%;max-width:720px;margin:0 auto}
+.flow-step{
+  background:var(--glass-bg);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);padding:1.25rem 1.5rem;
+  transition:border-color .2s,box-shadow .2s;
+  position:relative;overflow:hidden;         /* keeps top-accent inside card */
+  box-sizing:border-box;
+}
+.flow-step::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--step-accent,rgba(255,119,51,.6));
+}
+.flow-step:hover{border-color:rgba(255,119,51,.35);box-shadow:0 0 28px rgba(255,119,51,.08)}
+.flow-step-single{width:100%}
+.flow-step-half{flex:1;min-width:0}          /* min-width:0 prevents flex blowout */
+
+/* Step inner */
+.flow-step-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:0.75rem}
+.flow-step-num{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:2px;
+  background:linear-gradient(135deg,var(--grafana-orange),var(--grafana-orange-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:900;color:#fff;
+}
+.flow-step-title{font-size:.9rem;font-weight:800;color:var(--text-primary);line-height:1.3;word-break:break-word}
+.flow-step-subtitle{font-size:.72rem;color:var(--grafana-orange);font-weight:700;margin-top:2px}
+.flow-step-desc{font-size:.81rem;color:var(--text-secondary);line-height:1.68;margin-bottom:.75rem}
+.flow-step-desc code{
+  background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;
+  font-size:.85em;color:#e0c97f;font-family:monospace;word-break:break-all;
+}
+.flow-step-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:.5rem}
+.flow-tag{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.03em;border:1px solid;white-space:nowrap}
+.flow-tag-orange{background:rgba(255,119,51,.1);color:var(--grafana-orange);border-color:rgba(255,119,51,.3)}
+.flow-tag-blue{background:rgba(24,144,255,.1);color:var(--info);border-color:rgba(24,144,255,.3)}
+.flow-tag-green{background:rgba(82,196,26,.08);color:var(--success);border-color:rgba(82,196,26,.25)}
+.flow-tag-purple{background:rgba(139,92,246,.1);color:#a78bfa;border-color:rgba(139,92,246,.3)}
+.flow-tag-cyan{background:rgba(0,212,255,.1);color:#22d3ee;border-color:rgba(0,212,255,.3)}
+.flow-tag-yellow{background:rgba(250,173,20,.08);color:var(--warning);border-color:rgba(250,173,20,.25)}
+
+/* Parallel split / merge labels */
+.flow-parallel-label{
+  font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text-muted);padding:.55rem 0;
+  display:flex;align-items:center;gap:8px;
+  max-width:720px;margin:0 auto;
+}
+.flow-parallel-label::before,.flow-parallel-label::after{content:'';flex:1;height:1px;background:rgba(255,119,51,.18)}
+.flow-merge-label{
+  text-align:center;font-size:.68rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--text-muted);
+  padding:.45rem 0;max-width:720px;margin:0 auto;
+}
+
+/* LiteLLM badge */
+.litellm-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35);
+  border-radius:20px;padding:3px 10px;
+  font-size:.7rem;font-weight:800;color:#a78bfa;letter-spacing:.03em;margin-bottom:8px;
+}
+
+/* Provider pills */
+.provider-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.provider-pill{
+  font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+  color:var(--text-secondary);white-space:nowrap;
+}
+.provider-pill.active{background:rgba(82,196,26,.08);border-color:rgba(82,196,26,.3);color:var(--success)}
+
+/* Agent chain */
+.agent-chain{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:8px}
+.agent-pill{
+  font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:20px;
+  border:1px solid rgba(255,119,51,.25);background:rgba(255,119,51,.07);
+  color:var(--grafana-orange);white-space:nowrap;
+}
+.agent-pill.planner{background:rgba(255,119,51,.15);border-color:rgba(255,119,51,.4)}
+.agent-pill.synth{background:rgba(82,196,26,.08);border-color:rgba(82,196,26,.3);color:var(--success)}
+.agent-arrow{color:rgba(255,255,255,.22);font-size:.7rem;line-height:1}
+
+@media(max-width:720px){
+  .flow-step-row{flex-direction:column;align-items:stretch;max-width:100%}
+  .flow-step-half{flex:none;width:100%}
+  .flow-step-title{font-size:.85rem}
+}
+
+/* ============================================================
    17. TECH STACK SECTION
    ============================================================ */
 .tech-section{background:var(--dark-bg);padding:6rem 0}
@@ -583,6 +695,7 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
       <a href="#service-insights" class="cmd-item" data-cmd="Service Insights SAAFE scoring risk leaderboard"><div class="cmd-item-icon">🛡️</div><div class="cmd-item-text"><strong>Service Insights</strong><span>SAAFE risk scoring · real-time service leaderboard</span></div></a>
       <a href="#slo-framework" class="cmd-item" data-cmd="SLO Framework error budget burn rate reliability"><div class="cmd-item-icon">📊</div><div class="cmd-item-text"><strong>Enterprise SLO Framework</strong><span>Error budgets + burn rate alerts · Google SRE principles</span></div></a>
       <a href="#architecture" class="cmd-item" data-cmd="Architecture stack infrastructure deployment"><div class="cmd-item-icon">🏗️</div><div class="cmd-item-text"><strong>Architecture</strong><span>Full platform architecture diagram</span></div></a>
+      <a href="#request-flow" class="cmd-item" data-cmd="Request flow LiteLLM Grafana plugin backend LLM step by step"><div class="cmd-item-icon">🔄</div><div class="cmd-item-text"><strong>Request Flow</strong><span>End-to-end: Plugin → LiteLLM → Agents → Stream</span></div></a>
       <a href="#impact" class="cmd-item" data-cmd="Impact metrics results MTTR noise reduction"><div class="cmd-item-icon">💡</div><div class="cmd-item-text"><strong>Platform Impact</strong><span>Measured results · MTTR, noise reduction, SLO coverage</span></div></a>
       <a href="#faq" class="cmd-item" data-cmd="FAQ questions answers help"><div class="cmd-item-icon">❓</div><div class="cmd-item-text"><strong>FAQ</strong><span>Frequently asked questions</span></div></a>
     </div>
@@ -1246,6 +1359,211 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
 </section>
 
 <!-- ============================================================
+     REQUEST FLOW — LiteLLM + Grafana Plugin → Backend → LLM
+     ============================================================ -->
+<section class="flow-section" id="request-flow" aria-labelledby="flow-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">🔄 Request Flow</div>
+      <h2 id="flow-heading">End-to-End: How a Query Travels<br>from Grafana Plugin to AI Answer</h2>
+      <p>Every user query takes a precise, governed path through the platform — from the Grafana panel through LiteLLM's unified LLM gateway to the observability stack and back as a streamed RCA.</p>
+    </div>
+
+    <div class="flow-diagram reveal" style="display:flex;flex-direction:column;align-items:center">
+
+      <!-- STEP 1 -->
+      <div class="flow-step-row">
+        <div class="flow-step flow-step-single" style="--step-accent:rgba(255,119,51,.7)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">1</div>
+            <div>
+              <div class="flow-step-title">User — Grafana Plugin Panel or React UI</div>
+              <div class="flow-step-subtitle">Entry Point · User Interaction Layer</div>
+            </div>
+          </div>
+          <div class="flow-step-desc">An on-call SRE types a natural language question in the Grafana Plugin Panel (<em>"investigate high error rate on checkout"</em>) or the React web app chat interface. The Grafana plugin is a standard Grafana app plugin that embeds an iframe with a WebSocket connection to the backend. A REST request or WebSocket message is initiated.</div>
+          <div class="flow-step-tags">
+            <span class="flow-tag flow-tag-orange">Grafana App Plugin</span>
+            <span class="flow-tag flow-tag-orange">React UI (Vite + shadcn/ui)</span>
+            <span class="flow-tag flow-tag-blue">WebSocket (native)</span>
+            <span class="flow-tag flow-tag-blue">REST API</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector"><div class="flow-connector-line"></div></div>
+
+      <!-- STEP 2 -->
+      <div class="flow-step-row">
+        <div class="flow-step flow-step-single" style="--step-accent:rgba(24,144,255,.7)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">2</div>
+            <div>
+              <div class="flow-step-title">FastAPI Backend — NovaSRE Application Server</div>
+              <div class="flow-step-subtitle">Auth · Session Management · Request Routing</div>
+            </div>
+          </div>
+          <div class="flow-step-desc">The FastAPI backend receives the request on <code>/ws/agent/{session_id}</code> (WebSocket) or <code>/api/v1/incidents/{id}/investigate</code> (REST). JWT authentication is validated, the incident context is loaded from PostgreSQL, and a new <strong>Investigation session</strong> is created. The session ID is used to fan out streaming results to the correct WebSocket subscribers via Redis pub/sub. The backend then dispatches the LangGraph investigation graph as a background task.</div>
+          <div class="flow-step-tags">
+            <span class="flow-tag flow-tag-blue">FastAPI 0.115+</span>
+            <span class="flow-tag flow-tag-blue">JWT Auth</span>
+            <span class="flow-tag flow-tag-green">PostgreSQL 16</span>
+            <span class="flow-tag flow-tag-green">Redis pub/sub</span>
+            <span class="flow-tag flow-tag-purple">Celery worker</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector"><div class="flow-connector-line"></div></div>
+
+      <!-- SPLIT LABEL -->
+      <div class="flow-parallel-label">Runs in parallel</div>
+
+      <!-- STEP 3a + 3b PARALLEL -->
+      <div class="flow-step-row">
+
+        <!-- 3a: LiteLLM -->
+        <div class="flow-step flow-step-half" style="--step-accent:rgba(139,92,246,.7)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">3a</div>
+            <div>
+              <div class="flow-step-title">LiteLLM Proxy</div>
+              <div class="flow-step-subtitle">Unified LLM Gateway · Rate Limiting · Cost Tracking</div>
+            </div>
+          </div>
+          <div class="litellm-badge">⚡ litellm.ai</div>
+          <div class="flow-step-desc">LiteLLM acts as a unified proxy between the LangGraph agents and any LLM provider. It handles: per-team token budgets, request rate limiting, cost attribution, automatic retries with fallback models, and a single OpenAI-compatible API surface — so switching from GPT-4o to Claude 3.5 or Ollama requires only a config change, not code changes.</div>
+          <div class="flow-step-tags">
+            <span class="flow-tag flow-tag-purple">litellm.ai proxy</span>
+            <span class="flow-tag flow-tag-purple">Token budget enforcement</span>
+            <span class="flow-tag flow-tag-purple">Cost tracking</span>
+          </div>
+          <div class="provider-pills">
+            <span class="provider-pill active">GPT-4o ✓</span>
+            <span class="provider-pill">Azure OpenAI</span>
+            <span class="provider-pill">Claude 3.5</span>
+            <span class="provider-pill">Llama 3 (Ollama)</span>
+            <span class="provider-pill">Mistral</span>
+            <span class="provider-pill">Groq</span>
+          </div>
+        </div>
+
+        <!-- 3b: MCP + Observability -->
+        <div class="flow-step flow-step-half" style="--step-accent:rgba(0,212,255,.6)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">3b</div>
+            <div>
+              <div class="flow-step-title">MCP Tool Layer + Observability Stack</div>
+              <div class="flow-step-subtitle">Read-Only Signal Fetching · PII Redaction</div>
+            </div>
+          </div>
+          <div class="flow-step-desc">The MCP Tool Layer executes read-only queries against all configured signal sources. Every query result passes through the PCI/PHI/PII redaction pipeline before being injected into LLM context. Results are cached in Redis for 60 seconds to avoid redundant queries within the same investigation session.</div>
+          <div class="flow-step-tags">
+            <span class="flow-tag flow-tag-cyan">MCP Server</span>
+            <span class="flow-tag flow-tag-cyan">PII Redaction</span>
+            <span class="flow-tag flow-tag-green">Redis cache (60s)</span>
+          </div>
+          <div class="provider-pills" style="margin-top:8px">
+            <span class="provider-pill active">Mimir PromQL ✓</span>
+            <span class="provider-pill active">Loki LogQL ✓</span>
+            <span class="provider-pill active">Tempo TraceQL ✓</span>
+            <span class="provider-pill active">Pyroscope ✓</span>
+            <span class="provider-pill active">Faro RUM ✓</span>
+            <span class="provider-pill active">Alertmanager ✓</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flow-merge-label">↓ Both results feed into ↓</div>
+      <div class="flow-connector"><div class="flow-connector-line"></div></div>
+
+      <!-- STEP 4 -->
+      <div class="flow-step-row">
+        <div class="flow-step flow-step-single" style="--step-accent:rgba(255,119,51,.7)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">4</div>
+            <div>
+              <div class="flow-step-title">LangGraph Multi-Agent Orchestration</div>
+              <div class="flow-step-subtitle">Planner → Specialist Agents → Synthesizer</div>
+            </div>
+          </div>
+          <div class="flow-step-desc">The <strong>Planner Agent</strong> (via LiteLLM → GPT-4o) analyses the incident context and decides which specialist agents to invoke and what questions each should answer. Specialist agents run in parallel — each uses LiteLLM-proxied LLM calls combined with live MCP tool data. The <strong>Synthesizer Agent</strong> collects all findings and generates the structured RCA markdown with confidence score and recommended actions.</div>
+          <div class="agent-chain">
+            <span class="agent-pill planner">🧭 Planner</span>
+            <span class="agent-arrow">→</span>
+            <span class="agent-pill">📈 Metrics</span>
+            <span class="agent-pill">📋 Logs</span>
+            <span class="agent-pill">🔗 Traces</span>
+            <span class="agent-pill">🔥 Profiles</span>
+            <span class="agent-pill">🌐 Frontend</span>
+            <span class="agent-arrow">→</span>
+            <span class="agent-pill synth">📝 Synthesizer</span>
+          </div>
+          <div class="flow-step-tags" style="margin-top:10px">
+            <span class="flow-tag flow-tag-orange">LangGraph StateGraph</span>
+            <span class="flow-tag flow-tag-orange">Parallel agent dispatch</span>
+            <span class="flow-tag flow-tag-purple">LiteLLM → GPT-4o</span>
+            <span class="flow-tag flow-tag-blue">Stateful investigation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector"><div class="flow-connector-line"></div></div>
+
+      <!-- STEP 5 -->
+      <div class="flow-step-row">
+        <div class="flow-step flow-step-single" style="--step-accent:rgba(82,196,26,.6)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">5</div>
+            <div>
+              <div class="flow-step-title">WebSocket Stream — Real-Time Partial Results</div>
+              <div class="flow-step-subtitle">Redis pub/sub → WebSocket fanout → UI</div>
+            </div>
+          </div>
+          <div class="flow-step-desc">As each specialist agent completes, findings are immediately published to a Redis pub/sub channel keyed by session ID. The FastAPI WebSocket handler subscribes to this channel and streams typed events to the connected client — no waiting for all agents to finish. The frontend renders findings incrementally: tool call cards appear as they execute, signal findings appear as agents report, and the final RCA renders when the Synthesizer completes.</div>
+          <div class="flow-step-tags">
+            <span class="flow-tag flow-tag-green">Redis pub/sub</span>
+            <span class="flow-tag flow-tag-blue">WebSocket fanout</span>
+            <span class="flow-tag flow-tag-green">Streaming (partial results)</span>
+          </div>
+          <div style="margin-top:10px;font-size:.75rem;color:var(--text-muted);font-family:monospace;background:rgba(0,0,0,.3);border-radius:6px;padding:8px 12px;line-height:2;overflow-x:auto;word-break:break-word">
+            <span style="color:#22d3ee">{ type: "thinking",  agent: "planner",  content: "Creating plan..." }</span><br>
+            <span style="color:#a78bfa">{ type: "tool_call", tool:  "mimir_query", query: "rate(...)[5m]" }</span><br>
+            <span style="color:#22d3ee">{ type: "finding",   agent: "metrics",  content: "Error rate 12.3%..." }</span><br>
+            <span style="color:#4ade80">{ type: "rca",       content: "## Root Cause Analysis\n..." }</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector"><div class="flow-connector-line"></div></div>
+
+      <!-- STEP 6 -->
+      <div class="flow-step-row">
+        <div class="flow-step flow-step-single" style="--step-accent:rgba(255,119,51,.7)">
+          <div class="flow-step-head">
+            <div class="flow-step-num">6</div>
+            <div>
+              <div class="flow-step-title">Grafana Plugin Renders RCA &amp; Tool Call Trace</div>
+              <div class="flow-step-subtitle">Result Layer · Signal Evidence · Recommended Actions</div>
+            </div>
+          </div>
+          <div class="flow-step-desc">The Grafana Plugin Panel (or React UI) receives the streamed events and progressively renders: the <strong>Investigation Plan</strong> (steps ticked off in real time), <strong>Tool Call Cards</strong> (every PromQL / LogQL / TraceQL query with its result), per-signal <strong>Evidence Panels</strong> (metrics chart, log terminal, trace waterfall), and the final <strong>RCA Report</strong> in markdown with confidence score, user impact estimate, and 3-tier action items (immediate / short-term / long-term).</div>
+          <div class="flow-step-tags">
+            <span class="flow-tag flow-tag-orange">Grafana App Plugin</span>
+            <span class="flow-tag flow-tag-orange">React + Recharts</span>
+            <span class="flow-tag flow-tag-blue">Markdown RCA render</span>
+            <span class="flow-tag flow-tag-green">Confidence score</span>
+            <span class="flow-tag flow-tag-yellow">Tool call transparency</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /flow-diagram -->
+  </div>
+</section>
+
+<!-- ============================================================
      TECH STACK
      ============================================================ -->
 <section class="tech-section" id="tech-stack" aria-labelledby="tech-heading">
@@ -1270,6 +1588,7 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
     <div class="reveal" style="margin-top:1.5rem">
       <p class="text-muted" style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:1rem">AI &amp; ML</p>
       <div class="tech-row">
+        <div class="tech-stack-pill">LiteLLM Proxy<span class="tech-tooltip">Unified LLM gateway — token budgets, cost tracking, multi-provider routing</span></div>
         <div class="tech-stack-pill">GPT-4o / GPT-4.1<span class="tech-tooltip">Primary LLM for RCA synthesis and flamegraph analysis</span></div>
         <div class="tech-stack-pill">OpenAI Embeddings<span class="tech-tooltip">text-embedding-3-large for semantic clustering</span></div>
         <div class="tech-stack-pill">LangGraph<span class="tech-tooltip">Multi-agent orchestration with stateful workflows</span></div>
@@ -1503,6 +1822,7 @@ footer{background:#0a0b0f;border-top:1px solid var(--glass-border);padding:4rem 
         <h4>Platform</h4>
         <a href="#overview">Overview</a>
         <a href="#architecture">Architecture</a>
+        <a href="#request-flow">Request Flow</a>
         <a href="#tech-stack">Tech Stack</a>
         <a href="#impact">Platform Impact</a>
         <a href="#faq">FAQ</a>
